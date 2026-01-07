@@ -91,14 +91,6 @@ python3 -m unittest tests.test_core
 **Expected Top Ranking:** AWS ECS (Fargate)
 **Reasoning:** Steady traffic and medium control needs align with ECS/Fargate's balanced approach.
 
-## Screenshots
-
-![Home Screen](assets/ui_home.png)
-*Home screen with input controls and presets*
-
-![Results View](assets/ui_results.png)
-*Results view showing ranked options with scores and trade-offs*
-
 ## Project Structure
 
 - `src/models.py` - Data models (ComputeOption, EvaluationInputs, EvaluationResult)
