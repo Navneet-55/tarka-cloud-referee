@@ -2,6 +2,25 @@
 
 A constraint-aware decision-support tool that helps developers reason through AWS compute choices by explaining trade-offs rather than recommending a single "best" option.
 
+## Quick Demo (30 seconds)
+
+1. **Run the UI:**
+   ```bash
+   streamlit run ui.py
+   ```
+
+2. **Select inputs:**
+   - Traffic: Bursty / unpredictable
+   - Control: Low
+   - Cost: Very sensitive
+   - Click "Compare Options"
+
+3. **Review results:**
+   - See ranked options (Lambda, ECS/Fargate, EC2)
+   - Check confidence indicator
+   - Expand "Why this scored" for each option
+   - Review pros, cons, and watch-outs
+
 ## Features
 
 - **Ranked comparison** of AWS Lambda, ECS (Fargate), and EC2 with scores
@@ -10,7 +29,7 @@ A constraint-aware decision-support tool that helps developers reason through AW
 - **Explainability** showing why each option scored based on inputs
 - **Interactive Streamlit UI** with light/dark themes and smooth animations
 - **CLI interface** for terminal-based usage
-- **Export capabilities** (Markdown, JSON, copyable summary)
+- **Export capabilities** (Markdown, copyable summary)
 - **Offline-first** with no external APIs or cloud calls
 
 ## How to Run
@@ -25,18 +44,60 @@ python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 ### CLI
 ```bash
-python cli.py
+python3 cli.py
 ```
 
 ### Streamlit UI
 ```bash
-streamlit run ui.py
+python3 -m streamlit run ui.py
 ```
+
+### Run Tests
+```bash
+python3 -m unittest tests.test_core
+```
+
+## Example Scenarios
+
+### Scenario 1: Startup MVP
+**Inputs:**
+- Traffic: Bursty / unpredictable
+- Control: Low
+- Cost: Very sensitive
+
+**Expected Top Ranking:** AWS Lambda
+**Reasoning:** Bursty traffic and cost sensitivity favor Lambda's pay-per-use model and auto-scaling.
+
+### Scenario 2: Enterprise Migration
+**Inputs:**
+- Traffic: Steady / predictable
+- Control: High
+- Cost: Flexible
+
+**Expected Top Ranking:** AWS EC2
+**Reasoning:** High control needs and steady traffic favor EC2's full infrastructure control.
+
+### Scenario 3: Microservices API
+**Inputs:**
+- Traffic: Steady / predictable
+- Control: Medium
+- Cost: Flexible
+
+**Expected Top Ranking:** AWS ECS (Fargate)
+**Reasoning:** Steady traffic and medium control needs align with ECS/Fargate's balanced approach.
+
+## Screenshots
+
+![Home Screen](assets/ui_home.png)
+*Home screen with input controls and presets*
+
+![Results View](assets/ui_results.png)
+*Results view showing ranked options with scores and trade-offs*
 
 ## Project Structure
 
@@ -45,14 +106,21 @@ streamlit run ui.py
 - `src/rendering.py` - Rendering helpers for consistent output
 - `cli.py` - Command-line interface
 - `ui.py` - Streamlit web interface
+- `tests/test_core.py` - Unit tests for core logic
 - `requirements.txt` - Python dependencies
 - `.kiro/notes.md` - Kiro usage notes
 
-## Screenshots
+## Limitations
 
-Add screenshots to `assets/` directory:
-- `assets/ui_home.png` - Home screen with inputs
-- `assets/ui_results.png` - Results view with ranked options
+- **Early-stage focus:** Designed for initial architecture decisions, not production optimization
+- **Three options only:** Compares Lambda, ECS/Fargate, and EC2; does not include other AWS services
+- **Simplified scoring:** Uses basic rule-based scoring; does not model complex cost calculations or performance benchmarks
+- **No compliance modeling:** Does not account for specific compliance requirements (HIPAA, PCI-DSS, etc.)
+- **Static assumptions:** Assumes standard AWS regions and typical workload patterns
+
+## Decision Logic Version
+
+**v1.0** - Deterministic, rule-based scoring with explainability
 
 ## Kiro Usage
 

@@ -775,7 +775,7 @@ Disclaimer: This is not a single best answer; use the trade-offs above to decide
     st.markdown("""
     <div class="footer-text">
         <strong>Note:</strong> This is not a single best answer; use the trade-offs above to decide.<br>
-        Decision logic: v1 (deterministic, local)
+        Decision logic: v1.0 (deterministic, local)
     </div>
     """, unsafe_allow_html=True)
 
