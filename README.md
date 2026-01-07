@@ -1,62 +1,56 @@
 # Tarka – Cloud Compute Referee
 
-Tarka is a small decision-support tool that helps compare AWS compute options by highlighting trade-offs instead of recommending a single “best” choice.
+Tarka is a lightweight decision-support tool that helps compare AWS compute services by explaining **trade-offs** instead of recommending a single “best” option.
 
-I built this as part of the **AI for Bharat – Kiro Week 6 (“The Referee”) challenge**, which focuses on helping users reason through decisions rather than just consuming answers.
+It is designed to reflect how engineers reason about infrastructure choices early in a project, when requirements are still evolving.
+
+This project was built as part of the **AI for Bharat – Kiro Week 6 (“The Referee”) challenge**.
 
 ---
 
 ## Problem
 
-Choosing the right AWS compute service early in a project can be challenging. Services like **AWS Lambda**, **ECS**, and **EC2** solve different problems, but documentation usually explains them in isolation.
+Choosing the right AWS compute service early in a project can be confusing.
 
-What’s often missing is a clear comparison that explains **why** one option might be more suitable than another under specific constraints.
+Services like **AWS Lambda**, **ECS (Fargate)**, and **EC2** all solve different problems, but documentation usually explains them in isolation. What’s often missing is a clear explanation of **why** one option might be preferable over another under specific constraints.
 
 ---
 
 ## Approach
 
-Instead of trying to be exhaustive, I focused on a small set of practical factors that commonly influence early architecture decisions:
+Instead of trying to be exhaustive, Tarka focuses on a small set of practical decision factors:
 
-- Operational overhead  
-- Cost sensitivity  
-- Traffic patterns  
-- Level of infrastructure control  
+- Traffic patterns (bursty vs steady)
+- Level of infrastructure control required
+- Cost sensitivity
 
-The tool presents multiple valid options and explains:
-- Where each option works well  
-- What trade-offs come with that choice  
-- When an option should probably be avoided  
+The tool compares multiple valid options and explains:
+- Where each option works well
+- The trade-offs involved
+- When an option may *not* be ideal
 
-The goal is to support informed decision-making, not to replace it.
+The goal is to support **informed decision-making**, not to replace it.
 
 ---
 
 ## Implementation
 
-The core logic lives in `referee.py`.
+- Core comparison logic lives in `src/tarka_core.py`
+- `cli.py` provides a command-line interface
+- `ui.py` provides a simple Streamlit-based UI
+- Logic is intentionally explicit and readable, mirroring how these decisions are discussed during early architecture planning
 
-The comparison logic is intentionally kept simple and readable, reflecting how a developer might reason through these choices during early architecture discussions. This is not meant to be a production-ready recommendation engine, but a clear starting point for thinking through trade-offs.
-
----
-
-## Kiro Usage
-
-I used **Kiro** as a supporting tool during development to:
-
-- Clarify the intent of the challenge  
-- Break the problem into decision-focused components  
-- Iterate on explanations of trade-offs between services  
-
-All final design and implementation decisions were made manually, with Kiro used only to accelerate iteration and clarify reasoning—not to replace hands-on development.
+This is **not** a production recommendation engine. It is a clear, opinionated starting point for reasoning about AWS compute trade-offs.
 
 ---
 
 ## How to Run
 
-**Requirements:**  
+### Requirements
+
 - Python 3.9+
 
-**Run:**
+### Install dependencies
+
 ```bash
-python referee.py
+pip install -r requirements.txt
