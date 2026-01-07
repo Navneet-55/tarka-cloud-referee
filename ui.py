@@ -1,17 +1,20 @@
 """
 Tarka — Cloud Compute Referee
-Streamlit UI with optimized control placement and improved readability.
+Streamlit UI with clean architecture and smooth interactions.
 """
 
 import streamlit as st
 import json
 from datetime import datetime
-from src.tarka_core import (
-    get_compute_options, score_options, get_score_rationale,
-    evaluate, get_confidence, get_what_would_change, get_assumptions
-)
+from src.models import EvaluationInputs, EvaluationResult
+from src.tarka_core import evaluate, get_compute_options
+from src.rendering import format_confidence
 
-# Page configuration
+
+# ============================================================================
+# PAGE CONFIGURATION
+# ============================================================================
+
 st.set_page_config(
     page_title="Tarka — Cloud Compute Referee",
     page_icon="⚖️",
@@ -19,32 +22,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 # ============================================================================
 # SESSION STATE INITIALIZATION
 # ============================================================================
 
 def init_session_state():
-    """Initialize all session state variables."""
+    """Initialize session state with defaults."""
     defaults = {
         'traffic': "bursty",
         'control': "low",
         'cost': "sensitive",
-        'results': None,
-        'view_mode': "card",
-        'compare_mode': False,
-        'advanced_mode': False,
-        'simple_mode': True,
         'theme': "light",
-        'weights': {"traffic": 1.0, "control": 1.0, "cost": 1.0},
-        'scenario_b': {"traffic": "steady", "control": "medium", "cost": "flexible"},
-        'max_exec_time': "not sure",
-        'compliance': "low",
-        'cold_start_tolerance': True,
-        'bias_override': None,
-        'deterministic_mode': True,
-        'arch_review_mode': False,
-        'sensitivity_weights': {"cost": 1.0, "ops": 1.0, "control": 1.0},
-        'reflection_mode': False
+        'mode': "simple",
+        'results': None,
+        'weights': {"traffic": 1.0, "control": 1.0, "cost": 1.0}
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -52,89 +44,40 @@ def init_session_state():
 
 init_session_state()
 
+
 # ============================================================================
 # CSS AND THEMING
 # ============================================================================
 
-def apply_base_css(theme):
-    """
-    Apply base CSS with theme support.
-    Ensures strong contrast and readable header text.
-    """
+def apply_base_css(theme: str):
+    """Apply base CSS with theme support and smooth animations."""
     if theme == "dark":
         bg_color = "#0e1117"
-        card_bg = "#1a1f2e"  # Slightly lighter than bg for contrast
-        surface = "#252b3a"  # For cards/sections
-        surface2 = "#2d3443"  # For nested elements
+        card_bg = "#1a1f2e"
+        surface = "#252b3a"
         text_color = "#ffffff"
         muted_color = "#b0b0b0"
         border_color = "#3d4451"
-        highlight_bg = "#2a2d3a"
-        sidebar_bg = "#151a28"  # Darker than main but not black
-        sidebar_border = "#2a2f3e"
+        sidebar_bg = "#151a28"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
-        header_bg = "#1a1f2e"
-        header_text = "#ffffff"
-        button_bg = "#252b3a"
-        button_hover = "#2d3443"
-        input_bg = "#1a1f2e"
-    else:  # light - warm, professional theme
-        bg_color = "#f5f7fa"  # Light grey-blue tint (not pure white)
-        card_bg = "#ffffff"  # White cards on tinted background
-        surface = "#ffffff"  # Card surface
-        surface2 = "#f8f9fb"  # Input backgrounds
-        text_color = "#2d3748"  # Dark slate (not pure black)
-        muted_color = "#718096"  # Readable grey for secondary text
-        border_color = "#e2e8f0"  # Soft border
-        highlight_bg = "#edf2f7"  # Light highlight
-        sidebar_bg = "#ffffff"  # White sidebar
-        sidebar_border = "#e2e8f0"  # Soft border
+    else:  # light
+        bg_color = "#f5f7fa"  # Tinted background
+        card_bg = "#ffffff"
+        surface = "#ffffff"
+        text_color = "#2d3748"  # Dark slate
+        muted_color = "#718096"
+        border_color = "#e2e8f0"
+        sidebar_bg = "#ffffff"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
-        header_bg = "#ffffff"
-        header_text = "#2d3748"
-        button_bg = "#ffffff"
-        button_hover = "#f7fafc"
-        input_bg = "#ffffff"
     
     css = f"""
     <style>
-    /* Ensure Streamlit header is visible and readable */
-    header[data-testid="stHeader"] {{
-        background-color: {header_bg} !important;
-        border-bottom: 1px solid {border_color};
-    }}
-    
-    header[data-testid="stHeader"] h1,
-    header[data-testid="stHeader"] h2,
-    header[data-testid="stHeader"] h3,
-    header[data-testid="stHeader"] span,
-    header[data-testid="stHeader"] div {{
-        color: {header_text} !important;
-    }}
-    
-    /* Base theme variables */
+    /* Motion system */
     :root {{
-        --bg: {bg_color};
-        --card: {card_bg};
-        --surface: {surface};
-        --surface2: {surface2};
-        --text: {text_color};
-        --muted: {muted_color};
-        --border: {border_color};
-        --accent: {primary_color};
-        --accent2: {secondary_color};
-        --highlight-bg: {highlight_bg};
-        --sidebar-bg: {sidebar_bg};
-        --sidebar-border: {sidebar_border};
-        --button-bg: {button_bg};
-        --button-hover: {button_hover};
-        --input-bg: {input_bg};
-        
-        /* Motion system - Apple-like */
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
         --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
         --dur-1: 120ms;
@@ -145,7 +88,7 @@ def apply_base_css(theme):
         --radius: 16px;
     }}
     
-    /* Accessibility: Respect reduced motion preference */
+    /* Accessibility: Respect reduced motion */
     @media (prefers-reduced-motion: reduce) {{
         *,
         *::before,
@@ -153,236 +96,57 @@ def apply_base_css(theme):
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
-            scroll-behavior: auto !important;
         }}
     }}
     
-    /* Page load animation wrapper */
-    .tarka-app-wrapper {{
-        animation: fadeInUp var(--dur-3) var(--ease);
-        opacity: 1;
+    /* Streamlit header - keep visible and readable */
+    header[data-testid="stHeader"] {{
+        background-color: {sidebar_bg} !important;
+        border-bottom: 1px solid {border_color};
     }}
     
-    @keyframes fadeInUp {{
-        from {{
-            opacity: 0;
-            transform: translateY(8px);
-        }}
-        to {{
-            opacity: 1;
-            transform: translateY(0);
-        }}
+    header[data-testid="stHeader"] * {{
+        color: {text_color} !important;
     }}
     
-    /* Ensure strong text contrast - no opacity */
+    /* Base theme variables */
+    :root {{
+        --bg: {bg_color};
+        --card: {card_bg};
+        --surface: {surface};
+        --text: {text_color};
+        --muted: {muted_color};
+        --border: {border_color};
+        --accent: {primary_color};
+        --accent2: {secondary_color};
+        --sidebar-bg: {sidebar_bg};
+    }}
+    
+    /* App background */
     .stApp {{
         background-color: var(--bg);
     }}
     
-    /* Sidebar styling - high contrast */
+    /* Sidebar styling */
     [data-testid="stSidebar"] {{
         background-color: var(--sidebar-bg) !important;
-        border-right: 1px solid var(--sidebar-border);
+        border-right: 1px solid var(--border);
     }}
     
     [data-testid="stSidebar"] * {{
         color: var(--text) !important;
     }}
     
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] div {{
+    /* Text colors - no opacity */
+    body, p, li, label, span, div, h1, h2, h3, h4, h5, h6 {{
         color: var(--text) !important;
     }}
     
-    /* Explicit text colors for all elements - no opacity tricks */
-    body {{
+    .stMarkdown, .stMarkdown * {{
         color: var(--text) !important;
     }}
     
-    .stApp > div > div > div > div {{
-        color: var(--text) !important;
-    }}
-    
-    p, li, label, span, div, h1, h2, h3, h4, h5, h6 {{
-        color: var(--text) !important;
-    }}
-    
-    /* Streamlit markdown elements */
-    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
-        color: var(--text) !important;
-    }}
-    
-    /* Streamlit labels and inputs - force readable colors */
-    .stSelectbox label, .stSlider label, .stRadio label, .stCheckbox label {{
-        color: var(--text) !important;
-    }}
-    
-    /* Button styling - smooth micro-interactions */
-    .stButton > button {{
-        background-color: var(--button-bg) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
-        font-weight: 500 !important;
-        transition: background-color var(--dur-1) var(--ease),
-                    border-color var(--dur-1) var(--ease),
-                    transform var(--dur-1) var(--ease),
-                    box-shadow var(--dur-1) var(--ease);
-    }}
-    
-    .stButton > button:hover {{
-        background-color: var(--button-hover) !important;
-        border-color: var(--accent) !important;
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-2);
-    }}
-    
-    .stButton > button:active {{
-        transform: translateY(0);
-        transition-duration: var(--dur-1);
-    }}
-    
-    /* Primary button accent */
-    .stButton > button[kind="primary"] {{
-        background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
-        color: white !important;
-        border: none !important;
-    }}
-    
-    .stButton > button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, var(--accent2), var(--accent)) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-    }}
-    
-    .stButton > button[kind="primary"]:active {{
-        transform: translateY(0);
-    }}
-    
-    /* Selectbox styling - smooth transitions */
-    .stSelectbox > div > div {{
-        background-color: var(--input-bg) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        transition: border-color var(--dur-1) var(--ease),
-                    background-color var(--dur-1) var(--ease),
-                    box-shadow var(--dur-1) var(--ease);
-    }}
-    
-    .stSelectbox > div > div > div {{
-        color: var(--text) !important;
-    }}
-    
-    .stSelectbox > div > div:hover {{
-        border-color: var(--accent) !important;
-        background-color: var(--surface2) !important;
-    }}
-    
-    .stSelectbox > div > div:focus-within {{
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }}
-    
-    /* Radio button styling */
-    .stRadio > div > label {{
-        color: var(--text) !important;
-    }}
-    
-    .stRadio > div > div > label {{
-        color: var(--text) !important;
-    }}
-    
-    /* Checkbox styling */
-    .stCheckbox > label {{
-        color: var(--text) !important;
-    }}
-    
-    /* Slider styling */
-    .stSlider > div > div {{
-        background-color: var(--input-bg) !important;
-    }}
-    
-    .stSlider > div > div > div {{
-        background-color: var(--accent) !important;
-    }}
-    
-    /* Text input styling - smooth focus transitions */
-    .stTextInput > div > div > input {{
-        background-color: var(--input-bg) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        transition: border-color var(--dur-1) var(--ease),
-                    background-color var(--dur-1) var(--ease),
-                    box-shadow var(--dur-1) var(--ease);
-    }}
-    
-    .stTextInput > div > div > input:hover {{
-        border-color: var(--accent) !important;
-        background-color: var(--surface2) !important;
-    }}
-    
-    .stTextInput > div > div > input:focus {{
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        background-color: var(--surface2) !important;
-    }}
-    
-    .stTextArea > div > div > textarea {{
-        background-color: var(--input-bg) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        transition: border-color var(--dur-1) var(--ease),
-                    background-color var(--dur-1) var(--ease),
-                    box-shadow var(--dur-1) var(--ease);
-    }}
-    
-    .stTextArea > div > div > textarea:hover {{
-        border-color: var(--accent) !important;
-        background-color: var(--surface2) !important;
-    }}
-    
-    .stTextArea > div > div > textarea:focus {{
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        background-color: var(--surface2) !important;
-    }}
-    
-    /* Radio and checkbox smooth transitions */
-    .stRadio > div > div > label {{
-        transition: color var(--dur-1) var(--ease);
-    }}
-    
-    .stCheckbox > label {{
-        transition: color var(--dur-1) var(--ease);
-    }}
-    
-    .stCheckbox > label:hover {{
-        color: var(--accent) !important;
-    }}
-    
-    /* Section headers with subtle accent */
-    h3 {{
-        color: var(--text) !important;
-        font-weight: 600 !important;
-        margin-top: 1.5rem !important;
-        margin-bottom: 1rem !important;
-    }}
-    
-    /* Muted text for secondary content */
-    .stCaption {{
-        color: var(--muted) !important;
-    }}
-    
-    /* Hero section - readable title with gradient underline and animation */
+    /* Hero section */
     .hero-header {{
         text-align: center;
         padding: 2rem 1rem;
@@ -390,7 +154,6 @@ def apply_base_css(theme):
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
-        position: relative;
         animation: fadeInUp var(--dur-3) var(--ease);
     }}
     
@@ -422,10 +185,10 @@ def apply_base_css(theme):
         font-size: 0.85rem;
         font-weight: bold;
         margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-1);
     }}
     
-    /* Tarka card base class - smooth interactions */
+    /* Cards */
     .tarka-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
@@ -434,74 +197,13 @@ def apply_base_css(theme):
         margin: 1.5rem 0;
         box-shadow: var(--shadow-1);
         transition: transform var(--dur-2) var(--ease),
-                    box-shadow var(--dur-2) var(--ease),
-                    border-color var(--dur-2) var(--ease);
+                    box-shadow var(--dur-2) var(--ease);
+        animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
     .tarka-card:hover {{
         transform: translateY(-2px);
         box-shadow: var(--shadow-2);
-    }}
-    
-    .tarka-card:focus-within {{
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }}
-    
-    /* Control bar - card styling */
-    .control-bar {{
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        box-shadow: var(--shadow-1);
-        transition: transform var(--dur-2) var(--ease),
-                    box-shadow var(--dur-2) var(--ease);
-    }}
-    
-    .control-bar:hover {{
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-2);
-    }}
-    
-    /* Requirements section card */
-    .requirements-card {{
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        box-shadow: var(--shadow-1);
-        transition: transform var(--dur-2) var(--ease),
-                    box-shadow var(--dur-2) var(--ease);
-    }}
-    
-    .requirements-card:hover {{
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-2);
-    }}
-    
-    /* Advanced options card */
-    .advanced-card {{
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        box-shadow: var(--shadow-1);
-        animation: fadeInUp var(--dur-3) var(--ease);
-    }}
-    
-    /* Cards - better contrast separation with smooth animations */
-    .summary-card {{
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        box-shadow: var(--shadow-1);
-        animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
     .option-card {{
@@ -512,8 +214,7 @@ def apply_base_css(theme):
         margin: 1.5rem 0;
         box-shadow: var(--shadow-1);
         transition: transform var(--dur-2) var(--ease),
-                    box-shadow var(--dur-2) var(--ease),
-                    border-color var(--dur-2) var(--ease);
+                    box-shadow var(--dur-2) var(--ease);
         animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
@@ -522,35 +223,13 @@ def apply_base_css(theme):
         box-shadow: var(--shadow-2);
     }}
     
-    .option-card:focus-within {{
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }}
-    
     .best-fit-card {{
-        background-color: var(--highlight-bg);
+        background-color: var(--surface);
         border: 2px solid var(--accent2);
         border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
         box-shadow: 0 4px 12px rgba(0, 212, 170, 0.2);
-        transition: transform var(--dur-2) var(--ease),
-                    box-shadow var(--dur-2) var(--ease);
-        animation: fadeInUp var(--dur-2) var(--ease-soft);
-    }}
-    
-    .best-fit-card:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 212, 170, 0.3);
-    }}
-    
-    .exports-card {{
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        box-shadow: var(--shadow-1);
         animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
@@ -590,30 +269,109 @@ def apply_base_css(theme):
     .confidence-medium {{ background-color: #ffa500; }}
     .confidence-low {{ background-color: #ff6b6b; }}
     
-    .preference-badge {{
-        display: inline-block;
-        background: var(--accent-color);
-        color: white;
-        padding: 0.3rem 0.8rem;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: bold;
-        margin-left: 0.5rem;
+    /* Buttons */
+    .stButton > button {{
+        background-color: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: background-color var(--dur-1) var(--ease),
+                    border-color var(--dur-1) var(--ease),
+                    transform var(--dur-1) var(--ease),
+                    box-shadow var(--dur-1) var(--ease);
     }}
     
-    /* Progress bars */
-    .score-meter {{
-        height: 8px;
-        background: var(--border);
-        border-radius: 4px;
-        overflow: hidden;
-        margin-top: 0.5rem;
+    .stButton > button:hover {{
+        background-color: var(--card) !important;
+        border-color: var(--accent) !important;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-2);
     }}
     
-    .score-fill {{
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), var(--accent2));
-        border-radius: 4px;
+    .stButton > button:active {{
+        transform: translateY(0);
+    }}
+    
+    .stButton > button[kind="primary"] {{
+        background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+        color: white !important;
+        border: none !important;
+    }}
+    
+    .stButton > button[kind="primary"]:hover {{
+        background: linear-gradient(135deg, var(--accent2), var(--accent)) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+    }}
+    
+    /* Inputs */
+    .stSelectbox > div > div {{
+        background-color: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        transition: border-color var(--dur-1) var(--ease);
+    }}
+    
+    .stSelectbox > div > div:hover {{
+        border-color: var(--accent) !important;
+    }}
+    
+    .stRadio > div > label,
+    .stCheckbox > label {{
+        color: var(--text) !important;
+    }}
+    
+    /* Animations */
+    @keyframes fadeInUp {{
+        from {{
+            opacity: 0;
+            transform: translateY(8px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+    
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {{
+        .hero-header {{
+            font-size: 1.8rem;
+            padding: 1rem 0.5rem;
+        }}
+        
+        body, p, li, label {{
+            font-size: 16px !important;
+        }}
+        
+        .tarka-card, .option-card, .best-fit-card {{
+            padding: 1rem;
+            margin: 1rem 0;
+        }}
+        
+        [class*="stButton"] {{
+            width: 100% !important;
+        }}
+        
+        .tarka-card:hover,
+        .option-card:hover {{
+            transform: none;
+        }}
+    }}
+    
+    /* Mobile hint */
+    .mobile-hint {{
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        color: var(--text);
+        text-align: center;
     }}
     
     /* Footer */
@@ -625,75 +383,20 @@ def apply_base_css(theme):
         border-top: 1px solid var(--border);
         margin-top: 2rem;
     }}
-    
-    /* Expander smooth reveal */
-    .streamlit-expanderHeader {{
-        transition: color var(--dur-1) var(--ease);
-    }}
-    
-    .streamlit-expanderHeader:hover {{
-        color: var(--accent) !important;
-    }}
-    
-    /* Results section fade-in */
-    .results-section {{
-        animation: fadeInUp var(--dur-3) var(--ease);
-    }}
-    
-    /* Mobile responsiveness - reduce motion on small screens */
-    @media (max-width: 600px) {{
-        .hero-header {{
-            font-size: 1.8rem;
-            padding: 1rem 0.5rem;
-        }}
-        
-        body, p, li, label, span, div {{
-            font-size: 16px !important;
-        }}
-        
-        .summary-card, .option-card, .best-fit-card, .exports-card,
-        .control-bar, .requirements-card, .advanced-card {{
-            padding: 1rem;
-            margin: 1rem 0;
-        }}
-        
-        .control-bar {{
-            padding: 1rem;
-        }}
-        
-        [class*="stButton"] {{
-            width: 100% !important;
-        }}
-        
-        /* Increase spacing on mobile */
-        .stMarkdown {{
-            margin-bottom: 1rem;
-        }}
-        
-        /* Reduce motion on mobile for performance */
-        .tarka-card:hover,
-        .option-card:hover,
-        .best-fit-card:hover {{
-            transform: none;
-        }}
-        
-        .stButton > button:hover {{
-            transform: none;
-        }}
-    }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
 
-# Apply CSS based on current theme
+# Apply CSS
 apply_base_css(st.session_state.theme)
+
 
 # ============================================================================
 # SIDEBAR (SECONDARY CONTROLS ONLY)
 # ============================================================================
 
-def render_sidebar_secondary():
-    """Render only secondary sidebar controls."""
+def render_sidebar():
+    """Render sidebar with minimal controls."""
     st.sidebar.title("⚙️ Settings")
     
     # Theme toggle
@@ -707,488 +410,8 @@ def render_sidebar_secondary():
     
     st.sidebar.markdown("---")
     
-    # About
-    with st.sidebar.expander("ℹ️ About"):
-        st.markdown("""
-        **Decision-support tool** — not a recommendation engine.
-        
-        Highlights trade-offs between AWS compute options to support informed decision-making.
-        
-        **No single 'best' answer** — use trade-offs to decide.
-        """)
-    
-    # Help
-    with st.sidebar.expander("❓ Help"):
-        st.markdown("""
-        **Run locally:**
-        ```bash
-        streamlit run ui.py
-        ```
-        
-        **Offline & Deterministic:**
-        - No external APIs
-        - No cloud calls
-        - All logic runs locally
-        """)
-    
-    # Glossary
-    with st.sidebar.expander("📖 Glossary"):
-        st.markdown("""
-        **Cold start:** Initial delay when a function/container starts from idle state.
-        
-        **Ops overhead:** Operational tasks like patching, monitoring, scaling.
-        
-        **Infrastructure control:** Level of control over underlying infrastructure (networking, storage, OS).
-        
-        **Burst traffic:** Unpredictable spikes in usage.
-        
-        **Steady traffic:** Predictable, consistent usage patterns.
-        """)
-
-# ============================================================================
-# CONTROL BAR (PRIMARY CONTROLS)
-# ============================================================================
-
-def render_control_bar():
-    """Render primary control bar at top of main page."""
-    st.markdown("### 🎛️ Control Bar")
-    st.markdown('<div class="control-bar">', unsafe_allow_html=True)
-    
-    with st.container():
-        col1, col2, col3, col4 = st.columns([2, 3, 2, 1])
-        
-        with col1:
-            # Mode toggle
-            app_mode = st.radio(
-                "Mode",
-                ["Simple", "Advanced"],
-                index=0 if st.session_state.simple_mode else 1,
-                horizontal=True
-            )
-            st.session_state.simple_mode = (app_mode == "Simple")
-            st.session_state.advanced_mode = (app_mode == "Advanced")
-        
-        with col2:
-            # Presets
-            st.markdown("**Presets:**")
-            preset_cols = st.columns(4)
-            presets = {
-                "Startup MVP": {"traffic": "bursty", "control": "low", "cost": "sensitive"},
-                "High-traffic API": {"traffic": "steady", "control": "medium", "cost": "flexible"},
-                "Batch": {"traffic": "steady", "control": "medium", "cost": "sensitive"},
-                "Legacy": {"traffic": "steady", "control": "high", "cost": "flexible"}
-            }
-            
-            for idx, (name, values) in enumerate(presets.items()):
-                with preset_cols[idx]:
-                    if st.button(name, use_container_width=True, key=f"preset_{name}"):
-                        st.session_state.traffic = values["traffic"]
-                        st.session_state.control = values["control"]
-                        st.session_state.cost = values["cost"]
-                        st.rerun()
-        
-        with col3:
-            # Compare mode toggle
-            compare_mode = st.checkbox("Compare Two Scenarios", value=st.session_state.compare_mode)
-            st.session_state.compare_mode = compare_mode
-            
-            # Reset button
-            if st.button("🔄 Reset", use_container_width=True):
-                st.session_state.traffic = "bursty"
-                st.session_state.control = "low"
-                st.session_state.cost = "sensitive"
-                st.session_state.results = None
-                st.session_state.weights = {"traffic": 1.0, "control": 1.0, "cost": 1.0}
-                st.rerun()
-        
-        with col4:
-            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("---")
-    
-    # Requirements inputs - in a card
-    st.markdown("### 📊 Requirements")
-    st.markdown('<div class="requirements-card">', unsafe_allow_html=True)
-    req_col1, req_col2, req_col3 = st.columns(3)
-    
-    with req_col1:
-        traffic = st.selectbox(
-            "🚦 Traffic pattern",
-            ["bursty", "steady"],
-            index=0 if st.session_state.traffic == "bursty" else 1,
-            format_func=lambda x: "Bursty / unpredictable" if x == "bursty" else "Steady / predictable"
-        )
-    
-    with req_col2:
-        control = st.selectbox(
-            "⚙️ Infrastructure control",
-            ["low", "medium", "high"],
-            index=["low", "medium", "high"].index(st.session_state.control),
-            format_func=lambda x: x.capitalize()
-        )
-    
-    with req_col3:
-        cost = st.selectbox(
-            "💰 Cost sensitivity",
-            ["sensitive", "flexible"],
-            index=0 if st.session_state.cost == "sensitive" else 1,
-            format_func=lambda x: "Very sensitive" if x == "sensitive" else "Flexible"
-        )
-    
-    st.session_state.traffic = traffic
-    st.session_state.control = control
-    st.session_state.cost = cost
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Advanced mode features - in a card
-    if st.session_state.advanced_mode:
-        st.markdown("---")
-        st.markdown("### ⚖️ Advanced Options")
-        st.markdown('<div class="advanced-card">', unsafe_allow_html=True)
-        st.markdown("---")
-        st.markdown("### ⚖️ Advanced Options")
-        
-        adv_col1, adv_col2, adv_col3 = st.columns(3)
-        
-        with adv_col1:
-            st.markdown("**Input Weights**")
-            weight_traffic = st.slider("Traffic", 0.0, 3.0, st.session_state.weights["traffic"], 0.1)
-            weight_control = st.slider("Control", 0.0, 3.0, st.session_state.weights["control"], 0.1)
-            weight_cost = st.slider("Cost", 0.0, 3.0, st.session_state.weights["cost"], 0.1)
-            st.session_state.weights = {
-                "traffic": weight_traffic,
-                "control": weight_control,
-                "cost": weight_cost
-            }
-        
-        with adv_col2:
-            st.markdown("**Hard Constraints**")
-            max_exec_time = st.selectbox(
-                "Max execution time",
-                ["seconds", "minutes", "hours", "not sure"],
-                index=["seconds", "minutes", "hours", "not sure"].index(st.session_state.max_exec_time)
-            )
-            compliance = st.selectbox(
-                "Compliance sensitivity",
-                ["low", "medium", "high"],
-                index=["low", "medium", "high"].index(st.session_state.compliance)
-            )
-            cold_start = st.checkbox("Cold start tolerance", value=st.session_state.cold_start_tolerance)
-            st.session_state.max_exec_time = max_exec_time
-            st.session_state.compliance = compliance
-            st.session_state.cold_start_tolerance = cold_start
-        
-        with adv_col3:
-            st.markdown("**Preferences**")
-            bias_options = ["None", "Serverless", "Containers", "Full Control"]
-            bias_idx = 0
-            if st.session_state.bias_override == "serverless":
-                bias_idx = 1
-            elif st.session_state.bias_override == "containers":
-                bias_idx = 2
-            elif st.session_state.bias_override == "control":
-                bias_idx = 3
-            
-            bias_choice = st.radio("I prefer", bias_options, index=bias_idx)
-            if bias_choice == "None":
-                st.session_state.bias_override = None
-            elif bias_choice == "Serverless":
-                st.session_state.bias_override = "serverless"
-            elif bias_choice == "Containers":
-                st.session_state.bias_override = "containers"
-            else:
-                st.session_state.bias_override = "control"
-            
-            deterministic = st.checkbox("Deterministic output", value=st.session_state.deterministic_mode)
-            st.session_state.deterministic_mode = deterministic
-            
-            arch_review = st.checkbox("Architecture review language", value=st.session_state.arch_review_mode)
-            st.session_state.arch_review_mode = arch_review
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Compare button
-    st.markdown("---")
-    if st.button("🔍 Compare Options", type="primary", use_container_width=True):
-        weights = st.session_state.weights if st.session_state.advanced_mode else None
-        ranked, details = evaluate(traffic, control, cost, weights)
-        st.session_state.results = {
-            'ranked': ranked,
-            'details': details,
-            'traffic': traffic,
-            'control': control,
-            'cost': cost
-        }
-        st.rerun()
-    
-    return traffic, control, cost
-
-# ============================================================================
-# RESULTS RENDERING
-# ============================================================================
-
-def render_results(ranked, details, traffic, control, cost):
-    """Render results section with all features."""
-    if not ranked:
-        return
-    
-    # Input Summary
-    st.markdown("### 📋 Input Summary")
-    st.markdown(f"""
-    <div class="summary-card">
-        <strong>Traffic pattern:</strong> {traffic.capitalize()}<br>
-        <strong>Infrastructure control:</strong> {control.capitalize()}<br>
-        <strong>Cost sensitivity:</strong> {cost.capitalize()}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Confidence indicator
-    conf_level, conf_msg = get_confidence(ranked)
-    conf_class = f"confidence-{conf_level.lower()}"
-    st.markdown(f'<div class="confidence-badge {conf_class}">Confidence: {conf_level.upper()}</div>', unsafe_allow_html=True)
-    st.caption(conf_msg)
-    
-    # Deterministic mode display
-    if st.session_state.deterministic_mode:
-        with st.expander("🔍 Deterministic Output Details"):
-            st.markdown("**Inputs used:**")
-            st.code(f"Traffic: {traffic}, Control: {control}, Cost: {cost}")
-            st.markdown("**Raw scores:**")
-            for opt in ranked:
-                st.code(f"{opt.name}: {opt.score}")
-            st.markdown("**Note:** No randomness; no external calls.")
-    
-    # Ranked Options
-    st.markdown("### 🎯 Ranked Options")
-    
-    max_score = max(opt.score for opt in ranked) if ranked else 1
-    
-    for idx, opt in enumerate(ranked):
-        is_best_fit = idx == 0
-        card_class = "best-fit-card" if is_best_fit else "option-card"
-        
-        st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
-        
-        # Rank badge
-        st.markdown(f'<span class="rank-badge">#{idx + 1}</span>', unsafe_allow_html=True)
-        
-        # Preference badge
-        if st.session_state.bias_override:
-            if (st.session_state.bias_override == "serverless" and opt.name == "AWS Lambda") or \
-               (st.session_state.bias_override == "containers" and "ECS" in opt.name) or \
-               (st.session_state.bias_override == "control" and opt.name == "AWS EC2"):
-                st.markdown('<span class="preference-badge">Preference Match</span>', unsafe_allow_html=True)
-        
-        col_title, col_score = st.columns([3, 1])
-        with col_title:
-            st.markdown(f"#### {opt.name}")
-        with col_score:
-            st.markdown(f'<div class="score-badge">Score: {opt.score}</div>', unsafe_allow_html=True)
-            score_pct = (opt.score / max_score * 100) if max_score > 0 else 0
-            st.markdown(f"""
-            <div class="score-meter">
-                <div class="score-fill" style="width: {score_pct}%"></div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Use when / Recommended for
-        if st.session_state.arch_review_mode:
-            st.markdown(f"**Recommended for:** {opt.best_for}")
-        else:
-            st.markdown(f"**Use when:** {opt.best_for}")
-        
-        # Explainability timeline
-        with st.expander("📊 Explainability Timeline"):
-            factors = ["traffic", "control", "cost"]
-            for factor in factors:
-                contrib = details["contributions"][opt.name][factor]
-                reason = details["reasons"][opt.name][factor]
-                if contrib > 0:
-                    st.markdown(f"**{factor.capitalize()}**: {reason}")
-                    st.markdown(f"  → Contribution: +{contrib:.1f}")
-                else:
-                    st.markdown(f"**{factor.capitalize()}**: No contribution")
-        
-        # Pros / Cons
-        col_pros, col_cons = st.columns(2)
-        with col_pros:
-            st.markdown("**✅ Pros**")
-            for p in opt.pros:
-                st.markdown(f"• {p}")
-        with col_cons:
-            if st.session_state.arch_review_mode:
-                st.markdown("**⚠️ Key Risks**")
-            else:
-                st.markdown("**❌ Cons**")
-            for c in opt.cons:
-                st.markdown(f"• {c}")
-        
-        # Watch outs
-        if st.session_state.arch_review_mode:
-            st.markdown("**⚠️ Open Questions**")
-        else:
-            st.markdown("**⚠️ Watch out for**")
-        for c in opt.cons:
-            st.markdown(f"  • {c}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Eliminated Options
-    if len(ranked) > 0:
-        eliminated = []
-        top_score = ranked[0].score
-        for opt in ranked[1:]:
-            if top_score - opt.score >= 2:
-                eliminated.append(opt)
-        
-        if eliminated:
-            st.markdown("### ⚠️ Eliminated / Risky Options")
-            for opt in eliminated:
-                st.markdown(f"**{opt.name}** — Score gap indicates less alignment with current constraints.")
-    
-    # What You're Trading Away
-    if ranked:
-        top_opt = ranked[0]
-        st.markdown("### 🔄 What You're Trading Away")
-        gains = ", ".join(top_opt.pros[:2])
-        trades = ", ".join(top_opt.cons[:2])
-        st.markdown(f"**You gain:** {gains}")
-        st.markdown(f"**You trade away:** {trades}")
-    
-    # Hard Constraints Warnings
-    warnings = []
-    if st.session_state.max_exec_time in ["seconds", "minutes"]:
-        warnings.append("Lambda has execution time limits; review max duration requirements.")
-    if st.session_state.compliance == "high":
-        warnings.append("High compliance needs may require additional AWS services beyond compute.")
-    if not st.session_state.cold_start_tolerance:
-        warnings.append("Cold start sensitivity may favor ECS/Fargate or EC2 over Lambda.")
-    
-    if warnings:
-        st.markdown("### ⚠️ Open Questions")
-        for warning in warnings:
-            st.markdown(f"• {warning}")
-    
-    # What Would Change
-    suggestions = get_what_would_change(ranked[0].name, traffic, control, cost)
-    st.markdown("### 🔄 What Would Change This Decision?")
-    for suggestion in suggestions:
-        st.markdown(f"• {suggestion}")
-    
-    # Reflection Mode
-    if st.session_state.reflection_mode and ranked:
-        st.markdown("### 💭 Reflection")
-        top_opt = ranked[0]
-        st.markdown(f"If I were building this system, I'd start with **{top_opt.name}** when constraints look like {traffic} traffic, {control} control needs, and {cost} cost sensitivity. This aligns with '{top_opt.best_for}'.")
-    
-    # Exports Card
-    st.markdown("### 📤 Exports")
-    st.markdown('<div class="exports-card">', unsafe_allow_html=True)
-    
-    col_exp1, col_exp2 = st.columns(2)
-    
-    with col_exp1:
-        # Markdown download
-        md_content = f"""# Tarka Decision Analysis
-
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Input Summary
-- Traffic: {traffic}
-- Control: {control}
-- Cost: {cost}
-
-## Confidence / Sensitivity
-**Level:** {conf_level.upper()}
-**Message:** {conf_msg}
-
-## Recommended Options (Ranked)
-"""
-        for idx, opt in enumerate(ranked):
-            md_content += f"""
-### {idx + 1}. {opt.name}
-Score: {opt.score}
-Use when: {opt.best_for}
-Pros: {', '.join(opt.pros)}
-Cons: {', '.join(opt.cons)}
-"""
-        md_content += "\n## Disclaimer\nThis is not a single best answer; use trade-offs to decide.\n"
-        
-        st.download_button(
-            "📄 Download Markdown",
-            data=md_content,
-            file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
-    
-    with col_exp2:
-        # Copy summary text area
-        summary_text = f"""Inputs: Traffic={traffic}, Control={control}, Cost={cost}
-
-Ranked Options:
-"""
-        for idx, opt in enumerate(ranked):
-            summary_text += f"{idx+1}. {opt.name} (Score: {opt.score}) - {opt.best_for}\n"
-        
-        summary_text += f"""
-Trade-off Summary:
-Top choice: {ranked[0].name}
-Gains: {', '.join(ranked[0].pros[:2])}
-Trade-offs: {', '.join(ranked[0].cons[:2])}
-
-Disclaimer: This is not a single best answer; use trade-offs to decide.
-"""
-        
-        st.text_area("Copy Decision Summary", value=summary_text, height=150, key="summary_text")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # JSON download
-    snapshot = {
-        "timestamp": datetime.now().isoformat(),
-        "inputs": {"traffic": traffic, "control": control, "cost": cost},
-        "confidence": {"level": conf_level, "message": conf_msg},
-        "results": [
-            {
-                "rank": idx + 1,
-                "name": opt.name,
-                "score": opt.score,
-                "use_when": opt.best_for,
-                "pros": opt.pros,
-                "cons": opt.cons
-            }
-            for idx, opt in enumerate(ranked)
-        ],
-        "disclaimer": "This is not a single best answer; use trade-offs to decide."
-    }
-    json_str = json.dumps(snapshot, indent=2)
-    st.download_button(
-        "💾 Download JSON",
-        data=json_str,
-        file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-        mime="application/json",
-        use_container_width=True
-    )
-    
-    # Footer
-    st.markdown('<div class="footer-text">Decision logic: v1 (deterministic, local)</div>', unsafe_allow_html=True)
-    
-    # Why no single best answer
-    with st.expander("🤔 Why no single \'best\' answer?"):
-        st.markdown("""
-        This tool supports **reasoning** rather than automation.
-        
-        Different teams have different constraints, risk tolerance, and operational capabilities.
-        What works for one project may not work for another.
-        
-        By showing trade-offs explicitly, you can make an informed decision that fits your specific context.
-        """)
-    
-    # About Tarka section
-    with st.expander("ℹ️ About Tarka — Cloud Compute Referee"):
+    # About Tarka
+    with st.sidebar.expander("ℹ️ About Tarka — Cloud Compute Referee"):
         st.markdown("""
         Tarka is a constraint-aware decision-support tool designed to help developers reason through AWS compute choices.
         Instead of recommending a single 'best' service, it explains trade-offs across Lambda, ECS, and EC2 based on real-world constraints such as traffic patterns, infrastructure control, and cost sensitivity.
@@ -1251,8 +474,311 @@ Disclaimer: This is not a single best answer; use trade-offs to decide.
         </div>
         """, unsafe_allow_html=True)
     
-    # Close results section wrapper
+    # Help
+    with st.sidebar.expander("❓ Help"):
+        st.markdown("""
+        **Run locally:**
+        ```bash
+        streamlit run ui.py
+        ```
+        
+        **Offline & Deterministic:**
+        - No external APIs
+        - No cloud calls
+        - All logic runs locally
+        """)
+    
+    # Glossary
+    with st.sidebar.expander("📖 Glossary"):
+        st.markdown("""
+        **Cold start:** Initial delay when a function/container starts from idle state.
+        
+        **Ops overhead:** Operational tasks like patching, monitoring, scaling.
+        
+        **Infrastructure control:** Level of control over underlying infrastructure (networking, storage, OS).
+        
+        **Burst traffic:** Unpredictable spikes in usage.
+        
+        **Steady traffic:** Predictable, consistent usage patterns.
+        """)
+
+
+# ============================================================================
+# CONTROL BAR (PRIMARY CONTROLS)
+# ============================================================================
+
+def render_control_bar():
+    """Render control bar with inputs and presets."""
+    st.markdown("### 🎛️ Control Bar")
+    st.markdown('<div class="tarka-card">', unsafe_allow_html=True)
+    
+    # Mode toggle
+    mode = st.radio(
+        "Mode",
+        ["Simple", "Advanced"],
+        index=0 if st.session_state.mode == "simple" else 1,
+        horizontal=True
+    )
+    st.session_state.mode = "simple" if mode == "Simple" else "advanced"
+    
+    st.markdown("---")
+    
+    # Presets
+    st.markdown("**Quick Presets:**")
+    preset_cols = st.columns(4)
+    presets = {
+        "Startup MVP": {"traffic": "bursty", "control": "low", "cost": "sensitive"},
+        "High-traffic API": {"traffic": "steady", "control": "medium", "cost": "flexible"},
+        "Batch": {"traffic": "steady", "control": "medium", "cost": "sensitive"},
+        "Legacy": {"traffic": "steady", "control": "high", "cost": "flexible"}
+    }
+    
+    for idx, (name, values) in enumerate(presets.items()):
+        with preset_cols[idx]:
+            if st.button(name, use_container_width=True, key=f"preset_{name}"):
+                st.session_state.traffic = values["traffic"]
+                st.session_state.control = values["control"]
+                st.session_state.cost = values["cost"]
+                st.session_state.results = None
+                st.rerun()
+    
+    st.markdown("---")
+    
+    # Requirements inputs
+    st.markdown("**Requirements:**")
+    req_col1, req_col2, req_col3 = st.columns(3)
+    
+    with req_col1:
+        traffic = st.selectbox(
+            "🚦 Traffic pattern",
+            ["bursty", "steady"],
+            index=0 if st.session_state.traffic == "bursty" else 1,
+            format_func=lambda x: "Bursty / unpredictable" if x == "bursty" else "Steady / predictable"
+        )
+    
+    with req_col2:
+        control = st.selectbox(
+            "⚙️ Infrastructure control",
+            ["low", "medium", "high"],
+            index=["low", "medium", "high"].index(st.session_state.control),
+            format_func=lambda x: x.capitalize()
+        )
+    
+    with req_col3:
+        cost = st.selectbox(
+            "💰 Cost sensitivity",
+            ["sensitive", "flexible"],
+            index=0 if st.session_state.cost == "sensitive" else 1,
+            format_func=lambda x: "Very sensitive" if x == "sensitive" else "Flexible"
+        )
+    
+    st.session_state.traffic = traffic
+    st.session_state.control = control
+    st.session_state.cost = cost
+    
+    # Advanced mode weights
+    if st.session_state.mode == "advanced":
+        st.markdown("---")
+        st.markdown("**Input Weights:**")
+        w_col1, w_col2, w_col3 = st.columns(3)
+        with w_col1:
+            weight_traffic = st.slider("Traffic", 0.0, 3.0, st.session_state.weights["traffic"], 0.1)
+        with w_col2:
+            weight_control = st.slider("Control", 0.0, 3.0, st.session_state.weights["control"], 0.1)
+        with w_col3:
+            weight_cost = st.slider("Cost", 0.0, 3.0, st.session_state.weights["cost"], 0.1)
+        st.session_state.weights = {
+            "traffic": weight_traffic,
+            "control": weight_control,
+            "cost": weight_cost
+        }
+    
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Compare button
+    st.markdown("---")
+    if st.button("🔍 Compare Options", type="primary", use_container_width=True):
+        inputs = EvaluationInputs(
+            traffic=traffic,
+            control=control,
+            cost=cost,
+            weights=st.session_state.weights if st.session_state.mode == "advanced" else None
+        )
+        result = evaluate(inputs)
+        st.session_state.results = result
+        st.rerun()
+    
+    return traffic, control, cost
+
+
+# ============================================================================
+# RESULTS RENDERING
+# ============================================================================
+
+def render_results(result: EvaluationResult):
+    """Render evaluation results."""
+    if not result or not result.ranked_options:
+        return
+    
+    st.markdown("### 📋 Input Summary")
+    st.markdown(f"""
+    <div class="tarka-card">
+        <strong>Traffic pattern:</strong> {result.inputs.traffic.capitalize()}<br>
+        <strong>Infrastructure control:</strong> {result.inputs.control.capitalize()}<br>
+        <strong>Cost sensitivity:</strong> {result.inputs.cost.capitalize()}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Confidence
+    conf_class = f"confidence-{result.confidence_level.lower()}"
+    st.markdown(f'<div class="confidence-badge {conf_class}">Confidence: {result.confidence_level.upper()}</div>', unsafe_allow_html=True)
+    st.caption(result.confidence_message)
+    
+    # Ranked options
+    st.markdown("### 🎯 Ranked Options")
+    
+    max_score = max(opt.score for opt in result.ranked_options) if result.ranked_options else 1
+    
+    for opt in result.ranked_options:
+        evaluation = result.option_details[opt.name]
+        is_best_fit = evaluation.rank == 1
+        card_class = "best-fit-card" if is_best_fit else "option-card"
+        
+        st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
+        
+        # Rank and score
+        st.markdown(f'<span class="rank-badge">#{evaluation.rank}</span>', unsafe_allow_html=True)
+        st.markdown(f'<div class="score-badge">Score: {opt.score:.1f}</div>', unsafe_allow_html=True)
+        
+        st.markdown(f"#### {opt.name}")
+        st.markdown(f"**Recommended for:** {opt.best_for}")
+        
+        # Why this scored
+        with st.expander("📊 Why this scored"):
+            for reason in evaluation.rationale:
+                st.markdown(f"• {reason}")
+        
+        # Pros / Cons
+        col_pros, col_cons = st.columns(2)
+        with col_pros:
+            st.markdown("**✅ Pros**")
+            for pro in opt.pros:
+                st.markdown(f"• {pro}")
+        with col_cons:
+            st.markdown("**❌ Cons**")
+            for con in opt.cons:
+                st.markdown(f"• {con}")
+        
+        # Watch outs
+        st.markdown("**⚠️ Watch out for:**")
+        for watch_out in opt.watch_outs:
+            st.markdown(f"  • {watch_out}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # What would change
+    if result.what_would_change:
+        st.markdown("### 🔄 What Would Change This Decision?")
+        for suggestion in result.what_would_change:
+            st.markdown(f"• {suggestion}")
+    
+    # Exports
+    st.markdown("### 📤 Exports")
+    st.markdown('<div class="tarka-card">', unsafe_allow_html=True)
+    
+    col_exp1, col_exp2 = st.columns(2)
+    
+    with col_exp1:
+        # Markdown export
+        md_content = f"""# Tarka Decision Analysis
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Input Summary
+- Traffic: {result.inputs.traffic}
+- Control: {result.inputs.control}
+- Cost: {result.inputs.cost}
+
+## Confidence
+**Level:** {result.confidence_level.upper()}
+**Message:** {result.confidence_message}
+
+## Ranked Options
+"""
+        for opt in result.ranked_options:
+            eval_detail = result.option_details[opt.name]
+            md_content += f"""
+### {eval_detail.rank}. {opt.name}
+**Score:** {opt.score:.1f}
+**Recommended for:** {opt.best_for}
+
+**Why this scored:**
+"""
+            for reason in eval_detail.rationale:
+                md_content += f"- {reason}\n"
+            
+            md_content += f"""
+**Pros:**
+"""
+            for pro in opt.pros:
+                md_content += f"- {pro}\n"
+            
+            md_content += f"""
+**Cons:**
+"""
+            for con in opt.cons:
+                md_content += f"- {con}\n"
+            
+            md_content += f"""
+**Watch out for:**
+"""
+            for watch_out in opt.watch_outs:
+                md_content += f"- {watch_out}\n"
+            
+            md_content += "\n---\n\n"
+        
+        md_content += "## Disclaimer\n\n"
+        md_content += "This is not a single best answer; use the trade-offs above to decide.\n"
+        
+        st.download_button(
+            "📄 Download Markdown",
+            data=md_content,
+            file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+    
+    with col_exp2:
+        # Copy summary
+        summary_text = f"""Inputs: Traffic={result.inputs.traffic}, Control={result.inputs.control}, Cost={result.inputs.cost}
+
+Ranked Options:
+"""
+        for opt in result.ranked_options:
+            eval_detail = result.option_details[opt.name]
+            summary_text += f"{eval_detail.rank}. {opt.name} (Score: {opt.score:.1f}) - {opt.best_for}\n"
+        
+        summary_text += f"""
+Trade-off Summary:
+Top choice: {result.top_option.name}
+Gains: {', '.join(result.top_option.pros[:2])}
+Trade-offs: {', '.join(result.top_option.cons[:2])}
+
+Disclaimer: This is not a single best answer; use the trade-offs above to decide.
+"""
+        
+        st.text_area("Copy Decision Summary", value=summary_text, height=150, key="summary_text")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Disclaimer
+    st.markdown("""
+    <div class="footer-text">
+        <strong>Note:</strong> This is not a single best answer; use the trade-offs above to decide.<br>
+        Decision logic: v1 (deterministic, local)
+    </div>
+    """, unsafe_allow_html=True)
+
 
 # ============================================================================
 # MAIN EXECUTION
@@ -1260,15 +786,12 @@ Disclaimer: This is not a single best answer; use trade-offs to decide.
 
 def main():
     """Main application flow."""
-    # Render sidebar (secondary only)
-    render_sidebar_secondary()
-    
-    # App wrapper for page load animation
-    st.markdown('<div class="tarka-app-wrapper">', unsafe_allow_html=True)
+    # Render sidebar
+    render_sidebar()
     
     # Hero section
     st.markdown("""
-    <div style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; padding: 0.5rem; background-color: var(--card); border-radius: 8px;">
+    <div style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; padding: 0.5rem; background-color: var(--surface); border-radius: 8px;">
         💡 Tip: App controls are in the main page. The ⋮ menu is Streamlit system options.
     </div>
     """, unsafe_allow_html=True)
@@ -1277,24 +800,20 @@ def main():
     st.markdown('<div class="hero-subtitle">Compare AWS compute options by understanding trade-offs</div>', unsafe_allow_html=True)
     st.markdown('<div class="offline-badge">Offline • Deterministic • No external APIs</div>', unsafe_allow_html=True)
     
-    # Render control bar and get inputs
-    traffic, control, cost = render_control_bar()
+    # Mobile hint
+    st.markdown("""
+    <div class="mobile-hint">
+        ☰ Use the sidebar for theme/info. Main controls are below.
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Render results if available
+    # Control bar
+    render_control_bar()
+    
+    # Results
     if st.session_state.results:
-        render_results(
-            st.session_state.results['ranked'],
-            st.session_state.results['details'],
-            st.session_state.results['traffic'],
-            st.session_state.results['control'],
-            st.session_state.results['cost']
-        )
-    
-    # Close app wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Close app wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
+        render_results(st.session_state.results)
+
 
 if __name__ == "__main__":
     main()
