@@ -133,6 +133,45 @@ def apply_base_css(theme):
         --button-bg: {button_bg};
         --button-hover: {button_hover};
         --input-bg: {input_bg};
+        
+        /* Motion system - Apple-like */
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+        --dur-1: 120ms;
+        --dur-2: 220ms;
+        --dur-3: 360ms;
+        --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.12);
+        --radius: 16px;
+    }}
+    
+    /* Accessibility: Respect reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {{
+        *,
+        *::before,
+        *::after {{
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }}
+    }}
+    
+    /* Page load animation wrapper */
+    .tarka-app-wrapper {{
+        animation: fadeInUp var(--dur-3) var(--ease);
+        opacity: 1;
+    }}
+    
+    @keyframes fadeInUp {{
+        from {{
+            opacity: 0;
+            transform: translateY(8px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
     }}
     
     /* Ensure strong text contrast - no opacity */
@@ -183,7 +222,7 @@ def apply_base_css(theme):
         color: var(--text) !important;
     }}
     
-    /* Button styling - fix white pills */
+    /* Button styling - smooth micro-interactions */
     .stButton > button {{
         background-color: var(--button-bg) !important;
         color: var(--text) !important;
@@ -191,14 +230,22 @@ def apply_base_css(theme):
         border-radius: 8px !important;
         padding: 0.5rem 1rem !important;
         font-weight: 500 !important;
-        transition: all 0.2s !important;
+        transition: background-color var(--dur-1) var(--ease),
+                    border-color var(--dur-1) var(--ease),
+                    transform var(--dur-1) var(--ease),
+                    box-shadow var(--dur-1) var(--ease);
     }}
     
     .stButton > button:hover {{
         background-color: var(--button-hover) !important;
         border-color: var(--accent) !important;
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--shadow-2);
+    }}
+    
+    .stButton > button:active {{
+        transform: translateY(0);
+        transition-duration: var(--dur-1);
     }}
     
     /* Primary button accent */
@@ -210,15 +257,23 @@ def apply_base_css(theme):
     
     .stButton > button[kind="primary"]:hover {{
         background: linear-gradient(135deg, var(--accent2), var(--accent)) !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
     }}
     
-    /* Selectbox styling */
+    .stButton > button[kind="primary"]:active {{
+        transform: translateY(0);
+    }}
+    
+    /* Selectbox styling - smooth transitions */
     .stSelectbox > div > div {{
         background-color: var(--input-bg) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
         border-radius: 6px !important;
+        transition: border-color var(--dur-1) var(--ease),
+                    background-color var(--dur-1) var(--ease),
+                    box-shadow var(--dur-1) var(--ease);
     }}
     
     .stSelectbox > div > div > div {{
@@ -227,6 +282,12 @@ def apply_base_css(theme):
     
     .stSelectbox > div > div:hover {{
         border-color: var(--accent) !important;
+        background-color: var(--surface2) !important;
+    }}
+    
+    .stSelectbox > div > div:focus-within {{
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }}
     
     /* Radio button styling */
@@ -252,17 +313,26 @@ def apply_base_css(theme):
         background-color: var(--accent) !important;
     }}
     
-    /* Text input styling */
+    /* Text input styling - smooth focus transitions */
     .stTextInput > div > div > input {{
         background-color: var(--input-bg) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
         border-radius: 6px !important;
+        transition: border-color var(--dur-1) var(--ease),
+                    background-color var(--dur-1) var(--ease),
+                    box-shadow var(--dur-1) var(--ease);
+    }}
+    
+    .stTextInput > div > div > input:hover {{
+        border-color: var(--accent) !important;
+        background-color: var(--surface2) !important;
     }}
     
     .stTextInput > div > div > input:focus {{
         border-color: var(--accent) !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        background-color: var(--surface2) !important;
     }}
     
     .stTextArea > div > div > textarea {{
@@ -270,11 +340,33 @@ def apply_base_css(theme):
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
         border-radius: 6px !important;
+        transition: border-color var(--dur-1) var(--ease),
+                    background-color var(--dur-1) var(--ease),
+                    box-shadow var(--dur-1) var(--ease);
+    }}
+    
+    .stTextArea > div > div > textarea:hover {{
+        border-color: var(--accent) !important;
+        background-color: var(--surface2) !important;
     }}
     
     .stTextArea > div > div > textarea:focus {{
         border-color: var(--accent) !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        background-color: var(--surface2) !important;
+    }}
+    
+    /* Radio and checkbox smooth transitions */
+    .stRadio > div > div > label {{
+        transition: color var(--dur-1) var(--ease);
+    }}
+    
+    .stCheckbox > label {{
+        transition: color var(--dur-1) var(--ease);
+    }}
+    
+    .stCheckbox > label:hover {{
+        color: var(--accent) !important;
     }}
     
     /* Section headers with subtle accent */
@@ -290,7 +382,7 @@ def apply_base_css(theme):
         color: var(--muted) !important;
     }}
     
-    /* Hero section - readable title with gradient underline */
+    /* Hero section - readable title with gradient underline and animation */
     .hero-header {{
         text-align: center;
         padding: 2rem 1rem;
@@ -299,6 +391,7 @@ def apply_base_css(theme):
         font-weight: bold;
         margin-bottom: 0.5rem;
         position: relative;
+        animation: fadeInUp var(--dur-3) var(--ease);
     }}
     
     .hero-header::after {{
@@ -309,6 +402,7 @@ def apply_base_css(theme):
         background: linear-gradient(90deg, var(--accent), var(--accent2));
         margin: 0.75rem auto 0;
         border-radius: 2px;
+        animation: fadeInUp var(--dur-3) var(--ease) 0.1s both;
     }}
     
     .hero-subtitle {{
@@ -331,76 +425,133 @@ def apply_base_css(theme):
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }}
     
+    /* Tarka card base class - smooth interactions */
+    .tarka-card {{
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: var(--shadow-1);
+        transition: transform var(--dur-2) var(--ease),
+                    box-shadow var(--dur-2) var(--ease),
+                    border-color var(--dur-2) var(--ease);
+    }}
+    
+    .tarka-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }}
+    
+    .tarka-card:focus-within {{
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }}
+    
     /* Control bar - card styling */
     .control-bar {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-1);
+        transition: transform var(--dur-2) var(--ease),
+                    box-shadow var(--dur-2) var(--ease);
+    }}
+    
+    .control-bar:hover {{
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-2);
     }}
     
     /* Requirements section card */
     .requirements-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-1);
+        transition: transform var(--dur-2) var(--ease),
+                    box-shadow var(--dur-2) var(--ease);
+    }}
+    
+    .requirements-card:hover {{
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-2);
     }}
     
     /* Advanced options card */
     .advanced-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-1);
+        animation: fadeInUp var(--dur-3) var(--ease);
     }}
     
-    /* Cards - better contrast separation */
+    /* Cards - better contrast separation with smooth animations */
     .summary-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-1);
+        animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
     .option-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        transition: box-shadow 0.2s;
+        box-shadow: var(--shadow-1);
+        transition: transform var(--dur-2) var(--ease),
+                    box-shadow var(--dur-2) var(--ease),
+                    border-color var(--dur-2) var(--ease);
+        animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
     .option-card:hover {{
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }}
+    
+    .option-card:focus-within {{
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }}
     
     .best-fit-card {{
         background-color: var(--highlight-bg);
         border: 2px solid var(--accent2);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
         box-shadow: 0 4px 12px rgba(0, 212, 170, 0.2);
+        transition: transform var(--dur-2) var(--ease),
+                    box-shadow var(--dur-2) var(--ease);
+        animation: fadeInUp var(--dur-2) var(--ease-soft);
+    }}
+    
+    .best-fit-card:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 212, 170, 0.3);
     }}
     
     .exports-card {{
         background-color: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-1);
+        animation: fadeInUp var(--dur-2) var(--ease-soft);
     }}
     
     /* Badges */
@@ -475,7 +626,21 @@ def apply_base_css(theme):
         margin-top: 2rem;
     }}
     
-    /* Mobile responsiveness */
+    /* Expander smooth reveal */
+    .streamlit-expanderHeader {{
+        transition: color var(--dur-1) var(--ease);
+    }}
+    
+    .streamlit-expanderHeader:hover {{
+        color: var(--accent) !important;
+    }}
+    
+    /* Results section fade-in */
+    .results-section {{
+        animation: fadeInUp var(--dur-3) var(--ease);
+    }}
+    
+    /* Mobile responsiveness - reduce motion on small screens */
     @media (max-width: 600px) {{
         .hero-header {{
             font-size: 1.8rem;
@@ -503,6 +668,17 @@ def apply_base_css(theme):
         /* Increase spacing on mobile */
         .stMarkdown {{
             margin-bottom: 1rem;
+        }}
+        
+        /* Reduce motion on mobile for performance */
+        .tarka-card:hover,
+        .option-card:hover,
+        .best-fit-card:hover {{
+            transform: none;
+        }}
+        
+        .stButton > button:hover {{
+            transform: none;
         }}
     }}
     </style>
@@ -1010,6 +1186,73 @@ Disclaimer: This is not a single best answer; use trade-offs to decide.
         
         By showing trade-offs explicitly, you can make an informed decision that fits your specific context.
         """)
+    
+    # About Tarka section
+    with st.expander("ℹ️ About Tarka — Cloud Compute Referee"):
+        st.markdown("""
+        Tarka is a constraint-aware decision-support tool designed to help developers reason through AWS compute choices.
+        Instead of recommending a single 'best' service, it explains trade-offs across Lambda, ECS, and EC2 based on real-world constraints such as traffic patterns, infrastructure control, and cost sensitivity.
+        The goal is to support thoughtful architectural decisions, especially in early-stage system design.
+        """)
+        
+        st.markdown("---")
+        st.markdown("**How Tarka Works**")
+        st.markdown("""
+        • User inputs are collected via a lightweight Streamlit interface  
+        • Inputs are mapped to deterministic rules (no probabilistic scoring or ML inference)
+        • Each compute option accumulates alignment signals based on constraints
+        • Final output presents ranked options with clear pros, cons, and watch-outs
+        • The system intentionally avoids a single definitive recommendation
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Technical Architecture & Stack**")
+        st.markdown("""
+        • **Language:** Python 3.9+
+        • **UI Framework:** Streamlit
+        • **Core Logic:** Pure Python (rule-based, deterministic)
+        • **State Management:** Streamlit session state
+        • **Styling:** Custom CSS injected at runtime (theme-aware)
+        • **Runtime:** Local execution; no backend services required
+        """)
+        
+        st.markdown("**Explicit Guarantees:**")
+        st.markdown("""
+        • No external APIs
+        • No cloud calls
+        • No data collection
+        • Fully offline-capable
+        • Reproducible results for the same inputs
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Design Philosophy**")
+        st.markdown("""
+        Tarka is intentionally opinionated in structure but transparent in reasoning.
+        The interface is designed to feel calm, readable, and focused — prioritizing clarity over complexity.
+        Visual polish supports comprehension rather than distraction, especially on mobile devices.
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Creator**")
+        st.markdown("""
+        Created by **Navneet Patnaik**
+        
+        Built as part of the AI for Bharat — Kiro Week 6 challenge.
+        All architectural decisions, scoring logic, and UI structure were implemented manually.
+        
+        **GitHub:** [https://github.com/Navneet-55](https://github.com/Navneet-55)
+        """)
+        
+        st.markdown("---")
+        st.markdown("""
+        <div style="color: var(--muted); font-size: 0.9rem; font-style: italic; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+        This tool is intended to support architectural reasoning and does not replace professional judgment.
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Close results section wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================================
 # MAIN EXECUTION
@@ -1019,6 +1262,9 @@ def main():
     """Main application flow."""
     # Render sidebar (secondary only)
     render_sidebar_secondary()
+    
+    # App wrapper for page load animation
+    st.markdown('<div class="tarka-app-wrapper">', unsafe_allow_html=True)
     
     # Hero section
     st.markdown("""
@@ -1043,6 +1289,12 @@ def main():
             st.session_state.results['control'],
             st.session_state.results['cost']
         )
+    
+    # Close app wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Close app wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
