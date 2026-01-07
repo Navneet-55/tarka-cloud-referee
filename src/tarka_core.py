@@ -57,6 +57,43 @@ def get_compute_options() -> List[ComputeOption]:
     ]
 
 
+def get_score_rationale(option_name, traffic, control, cost):
+    """Generate deterministic score rationale based on inputs."""
+    reasons = []
+    
+    if option_name == "AWS Lambda":
+        if traffic == "bursty":
+            reasons.append("Bursty traffic pattern (+2)")
+        if cost == "sensitive":
+            reasons.append("Cost-sensitive workload (+1)")
+        if control == "high":
+            reasons.append("High control needs may limit fit")
+        if traffic == "steady":
+            reasons.append("Steady traffic may not need Lambda's auto-scaling")
+    
+    elif option_name == "AWS ECS (Fargate)":
+        if traffic == "steady":
+            reasons.append("Steady traffic pattern (+2)")
+        if control == "medium":
+            reasons.append("Medium control requirement (+1)")
+        if traffic == "bursty":
+            reasons.append("Bursty traffic may prefer serverless")
+        if control == "high":
+            reasons.append("High control needs may require EC2")
+    
+    elif option_name == "AWS EC2":
+        if control == "high":
+            reasons.append("High control requirement (+2)")
+        if traffic == "bursty":
+            reasons.append("Bursty traffic may prefer serverless")
+        if cost == "sensitive":
+            reasons.append("Cost-sensitive workloads may prefer pay-per-use")
+        if control == "low":
+            reasons.append("Low control needs may prefer managed services")
+    
+    return reasons if reasons else ["Base score (no specific matches)"]
+
+
 def score_options(options, traffic, control, cost):
     for opt in options:
         if traffic == "bursty" and opt.name == "AWS Lambda":

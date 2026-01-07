@@ -1,4 +1,4 @@
-from src.tarka_core import get_compute_options, score_options
+from src.tarka_core import get_compute_options, score_options, get_score_rationale
 
 
 def ask(question, choices):
@@ -34,16 +34,42 @@ def main():
     options = get_compute_options()
     ranked = score_options(options, traffic, control, cost)
 
+    print("\n" + "="*70)
+    print("INPUT SUMMARY")
+    print("="*70)
+    print(f"Traffic pattern: {traffic}")
+    print(f"Infrastructure control: {control}")
+    print(f"Cost sensitivity: {cost}")
+    print("="*70)
+
     print("\nRecommended options (ranked):")
-    for opt in ranked:
-        print(f"\n{opt.name}")
-        print(f"Best for: {opt.best_for}")
-        print("Pros:")
+    for idx, opt in enumerate(ranked, 1):
+        print(f"\n{'='*70}")
+        print(f"{idx}. {opt.name}")
+        print(f"{'='*70}")
+        print(f"Score: {opt.score}")
+        print(f"\nUse when: {opt.best_for}")
+        
+        rationale = get_score_rationale(opt.name, traffic, control, cost)
+        print(f"\nWhy this scored:")
+        for reason in rationale:
+            print(f"  • {reason}")
+        
+        print(f"\nPros:")
         for p in opt.pros:
-            print(f"  - {p}")
-        print("Cons:")
+            print(f"  + {p}")
+        
+        print(f"\nCons:")
         for c in opt.cons:
             print(f"  - {c}")
+        
+        print(f"\nWatch out for:")
+        for c in opt.cons:
+            print(f"  ⚠ {c}")
+    
+    print("\n" + "="*70)
+    print("Note: This is not a single best answer; use the trade-offs above to decide.")
+    print("="*70)
 
 
 if __name__ == "__main__":
