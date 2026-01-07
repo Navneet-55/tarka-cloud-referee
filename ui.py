@@ -351,11 +351,6 @@ def render_sidebar_secondary():
         streamlit run ui.py
         ```
         
-        **On phone (Network URL):**
-        1. Find your computer's IP: `ifconfig` (Mac/Linux) or `ipconfig` (Windows)
-        2. Run: `streamlit run ui.py --server.address 0.0.0.0`
-        3. Open: `http://YOUR_IP:8501` on your phone
-        
         **Offline & Deterministic:**
         - No external APIs
         - No cloud calls
