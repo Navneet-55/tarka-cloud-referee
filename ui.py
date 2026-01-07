@@ -80,24 +80,24 @@ def apply_base_css(theme):
         button_bg = "#252b3a"
         button_hover = "#2d3443"
         input_bg = "#1a1f2e"
-    else:  # light
-        bg_color = "#ffffff"
-        card_bg = "#f8f9fa"
-        surface = "#ffffff"
-        surface2 = "#f0f0f0"
-        text_color = "#1a1a1a"
-        muted_color = "#666666"
-        border_color = "#d0d0d0"
-        highlight_bg = "#e8f4f8"
-        sidebar_bg = "#f8f9fa"
-        sidebar_border = "#e0e0e0"
+    else:  # light - warm, professional theme
+        bg_color = "#f5f7fa"  # Light grey-blue tint (not pure white)
+        card_bg = "#ffffff"  # White cards on tinted background
+        surface = "#ffffff"  # Card surface
+        surface2 = "#f8f9fb"  # Input backgrounds
+        text_color = "#2d3748"  # Dark slate (not pure black)
+        muted_color = "#718096"  # Readable grey for secondary text
+        border_color = "#e2e8f0"  # Soft border
+        highlight_bg = "#edf2f7"  # Light highlight
+        sidebar_bg = "#ffffff"  # White sidebar
+        sidebar_border = "#e2e8f0"  # Soft border
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
         header_bg = "#ffffff"
-        header_text = "#1a1a1a"
+        header_text = "#2d3748"
         button_bg = "#ffffff"
-        button_hover = "#f0f0f0"
+        button_hover = "#f7fafc"
         input_bg = "#ffffff"
     
     css = f"""
@@ -198,7 +198,19 @@ def apply_base_css(theme):
         background-color: var(--button-hover) !important;
         border-color: var(--accent) !important;
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }}
+    
+    /* Primary button accent */
+    .stButton > button[kind="primary"] {{
+        background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+        color: white !important;
+        border: none !important;
+    }}
+    
+    .stButton > button[kind="primary"]:hover {{
+        background: linear-gradient(135deg, var(--accent2), var(--accent)) !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }}
     
     /* Selectbox styling */
@@ -206,10 +218,15 @@ def apply_base_css(theme):
         background-color: var(--input-bg) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
     }}
     
     .stSelectbox > div > div > div {{
         color: var(--text) !important;
+    }}
+    
+    .stSelectbox > div > div:hover {{
+        border-color: var(--accent) !important;
     }}
     
     /* Radio button styling */
@@ -240,15 +257,40 @@ def apply_base_css(theme):
         background-color: var(--input-bg) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+    }}
+    
+    .stTextInput > div > div > input:focus {{
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }}
     
     .stTextArea > div > div > textarea {{
         background-color: var(--input-bg) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
     }}
     
-    /* Hero section - readable title */
+    .stTextArea > div > div > textarea:focus {{
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }}
+    
+    /* Section headers with subtle accent */
+    h3 {{
+        color: var(--text) !important;
+        font-weight: 600 !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }}
+    
+    /* Muted text for secondary content */
+    .stCaption {{
+        color: var(--muted) !important;
+    }}
+    
+    /* Hero section - readable title with gradient underline */
     .hero-header {{
         text-align: center;
         padding: 2rem 1rem;
@@ -256,15 +298,16 @@ def apply_base_css(theme):
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
+        position: relative;
     }}
     
     .hero-header::after {{
         content: '';
         display: block;
-        width: 100px;
-        height: 4px;
+        width: 120px;
+        height: 3px;
         background: linear-gradient(90deg, var(--accent), var(--accent2));
-        margin: 0.5rem auto;
+        margin: 0.75rem auto 0;
         border-radius: 2px;
     }}
     
@@ -278,80 +321,86 @@ def apply_base_css(theme):
     
     .offline-badge {{
         display: inline-block;
-        background: var(--accent2);
+        background: linear-gradient(135deg, var(--accent2), var(--accent));
         color: white;
         padding: 0.4rem 0.8rem;
         border-radius: 12px;
         font-size: 0.85rem;
         font-weight: bold;
         margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }}
     
-    /* Control bar */
+    /* Control bar - card styling */
     .control-bar {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }}
     
     /* Requirements section card */
     .requirements-card {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }}
     
     /* Advanced options card */
     .advanced-card {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }}
     
     /* Cards - better contrast separation */
     .summary-card {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }}
     
     .option-card {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.2s;
+    }}
+    
+    .option-card:hover {{
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
     }}
     
     .best-fit-card {{
         background-color: var(--highlight-bg);
-        border: 3px solid var(--accent2);
+        border: 2px solid var(--accent2);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 6px 12px rgba(0, 212, 170, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 212, 170, 0.2);
     }}
     
     .exports-card {{
         background-color: var(--surface);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }}
     
     /* Badges */
