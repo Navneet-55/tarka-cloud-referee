@@ -1,4 +1,7 @@
-from src.tarka_core import get_compute_options, score_options, get_score_rationale
+from src.tarka_core import (
+    get_compute_options, score_options, get_score_rationale,
+    evaluate, get_confidence, get_what_would_change, get_assumptions
+)
 
 
 def ask(question, choices):
@@ -31,9 +34,11 @@ def main():
         {"sensitive": "Very sensitive", "flexible": "Flexible"}
     )
 
-    options = get_compute_options()
-    ranked = score_options(options, traffic, control, cost)
-
+    ranked, details = evaluate(traffic, control, cost)
+    
+    # Calculate confidence
+    conf_level, conf_msg = get_confidence(ranked)
+    
     print("\n" + "="*70)
     print("INPUT SUMMARY")
     print("="*70)
@@ -41,6 +46,11 @@ def main():
     print(f"Infrastructure control: {control}")
     print(f"Cost sensitivity: {cost}")
     print("="*70)
+    
+    print(f"\n{'='*70}")
+    print(f"CONFIDENCE / SENSITIVITY: {conf_level.upper()}")
+    print(f"{'='*70}")
+    print(f"{conf_msg}")
 
     print("\nRecommended options (ranked):")
     for idx, opt in enumerate(ranked, 1):
@@ -67,9 +77,45 @@ def main():
         for c in opt.cons:
             print(f"  ⚠ {c}")
     
+    # Explainability timeline for top option
+    if ranked:
+        top_opt = ranked[0]
+        print(f"\n{'='*70}")
+        print(f"EXPLAINABILITY TIMELINE (Top Option: {top_opt.name})")
+        print(f"{'='*70}")
+        print("Step-by-step scoring breakdown:")
+        
+        factors = ["traffic", "control", "cost"]
+        for factor in factors:
+            contrib = details["contributions"][top_opt.name][factor]
+            reason = details["reasons"][top_opt.name][factor]
+            if contrib > 0 or reason:
+                print(f"  {factor.capitalize()}: {reason if reason else 'No contribution'}")
+                if contrib > 0:
+                    print(f"    → Score contribution: +{contrib:.1f}")
+            else:
+                print(f"  {factor.capitalize()}: No contribution to score")
+    
+    # What would change this decision
+    if ranked:
+        suggestions = get_what_would_change(ranked[0].name, traffic, control, cost)
+        print(f"\n{'='*70}")
+        print("WHAT WOULD CHANGE THIS DECISION?")
+        print(f"{'='*70}")
+        for suggestion in suggestions:
+            print(f"  • {suggestion}")
+    
     print("\n" + "="*70)
     print("Note: This is not a single best answer; use the trade-offs above to decide.")
     print("="*70)
+    
+    # Assumptions
+    assumptions = get_assumptions()
+    print(f"\n{'='*70}")
+    print("ASSUMPTIONS")
+    print(f"{'='*70}")
+    for assumption in assumptions:
+        print(f"  • {assumption}")
 
 
 if __name__ == "__main__":
