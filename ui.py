@@ -1,6 +1,6 @@
 """
 Tarka — Cloud Compute Referee
-Streamlit UI with polished UX, mobile support, and submission-safe features.
+Streamlit UI with optimized control placement and improved readability.
 """
 
 import streamlit as st
@@ -59,35 +59,47 @@ init_session_state()
 def apply_base_css(theme):
     """
     Apply base CSS with theme support.
-    Ensures strong contrast for mobile readability.
+    Ensures strong contrast and readable header text.
     """
     if theme == "dark":
         bg_color = "#0e1117"
         card_bg = "#1e2130"
-        text_color = "#ffffff"  # Full opacity for mobile
+        text_color = "#ffffff"
         muted_color = "#b0b0b0"
         border_color = "#3d4451"
         highlight_bg = "#2a2d3a"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
+        header_bg = "#1e2130"
+        header_text = "#ffffff"
     else:  # light
         bg_color = "#ffffff"
         card_bg = "#f8f9fa"
-        text_color = "#1a1a1a"  # Strong contrast, no opacity
+        text_color = "#1a1a1a"
         muted_color = "#666666"
         border_color = "#d0d0d0"
         highlight_bg = "#e8f4f8"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
+        header_bg = "#ffffff"
+        header_text = "#1a1a1a"
     
     css = f"""
     <style>
-    /* Keep Streamlit menu visible - only reduce header padding */
+    /* Ensure Streamlit header is visible and readable */
     header[data-testid="stHeader"] {{
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+        background-color: {header_bg} !important;
+        border-bottom: 1px solid {border_color};
+    }}
+    
+    header[data-testid="stHeader"] h1,
+    header[data-testid="stHeader"] h2,
+    header[data-testid="stHeader"] h3,
+    header[data-testid="stHeader"] span,
+    header[data-testid="stHeader"] div {{
+        color: {header_text} !important;
     }}
     
     /* Base theme variables */
@@ -102,33 +114,41 @@ def apply_base_css(theme):
         --highlight-bg: {highlight_bg};
     }}
     
-    /* Ensure strong text contrast - no opacity tricks */
+    /* Ensure strong text contrast - no opacity */
     .stApp {{
         background-color: var(--bg);
     }}
     
-    /* Explicit text colors for all elements - no opacity */
+    /* Explicit text colors for all elements - no opacity tricks */
+    body {{
+        color: var(--text) !important;
+    }}
+    
     p, li, label, span, div, h1, h2, h3, h4, h5, h6 {{
         color: var(--text) !important;
     }}
     
-    /* Ensure Streamlit markdown elements have proper color */
-    .stMarkdown, .stMarkdown p, .stMarkdown li {{
+    /* Streamlit markdown elements */
+    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
         color: var(--text) !important;
     }}
     
-    /* Hero header */
+    /* Streamlit labels and inputs */
+    .stSelectbox label, .stSlider label, .stRadio label, .stCheckbox label {{
+        color: var(--text) !important;
+    }}
+    
+    /* Hero section */
     .hero-header {{
         text-align: center;
         padding: 2rem 1rem;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
-        color: var(--text-color) !important;
     }}
     
     .hero-subtitle {{
@@ -148,6 +168,15 @@ def apply_base_css(theme):
         font-size: 0.85rem;
         font-weight: bold;
         margin: 0.5rem 0;
+    }}
+    
+    /* Control bar */
+    .control-bar {{
+        background-color: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
     }}
     
     /* Cards */
@@ -176,6 +205,14 @@ def apply_base_css(theme):
         padding: 1.5rem;
         margin: 1rem 0;
         box-shadow: 0 6px 12px rgba(0, 212, 170, 0.3);
+    }}
+    
+    .exports-card {{
+        background-color: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
     }}
     
     /* Badges */
@@ -225,50 +262,6 @@ def apply_base_css(theme):
         margin-left: 0.5rem;
     }}
     
-    /* Mobile responsiveness */
-    @media (max-width: 600px) {{
-        .hero-header {{
-            font-size: 1.8rem;
-            padding: 1rem 0.5rem;
-        }}
-        
-        .summary-card, .option-card, .best-fit-card {{
-            padding: 1rem;
-            margin: 0.5rem 0;
-        }}
-        
-        [class*="stButton"] {{
-            width: 100% !important;
-        }}
-    }}
-    
-    /* Mobile sidebar hint */
-    .mobile-hint {{
-        background-color: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin: 1rem 0;
-        font-size: 0.9rem;
-        color: var(--text);
-        text-align: center;
-    }}
-    
-    /* Footer */
-    .footer-text {{
-        text-align: center;
-        padding: 1rem;
-        color: var(--text);
-        font-size: 0.85rem;
-        border-top: 1px solid var(--border);
-        margin-top: 2rem;
-    }}
-    
-    /* Ensure all Streamlit elements have proper colors */
-    .stSelectbox label, .stSlider label, .stRadio label {{
-        color: var(--text) !important;
-    }}
-    
     /* Progress bars */
     .score-meter {{
         height: 8px;
@@ -283,6 +276,37 @@ def apply_base_css(theme):
         background: linear-gradient(90deg, var(--accent), var(--accent2));
         border-radius: 4px;
     }}
+    
+    /* Footer */
+    .footer-text {{
+        text-align: center;
+        padding: 1rem;
+        color: var(--text);
+        font-size: 0.85rem;
+        border-top: 1px solid var(--border);
+        margin-top: 2rem;
+    }}
+    
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {{
+        .hero-header {{
+            font-size: 1.8rem;
+            padding: 1rem 0.5rem;
+        }}
+        
+        .summary-card, .option-card, .best-fit-card, .exports-card {{
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }}
+        
+        .control-bar {{
+            padding: 0.75rem;
+        }}
+        
+        [class*="stButton"] {{
+            width: 100% !important;
+        }}
+    }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -291,17 +315,12 @@ def apply_base_css(theme):
 apply_base_css(st.session_state.theme)
 
 # ============================================================================
-# SIDEBAR CONTROLS
+# SIDEBAR (SECONDARY CONTROLS ONLY)
 # ============================================================================
 
-def render_sidebar_controls():
-    """Render all sidebar controls."""
-    st.sidebar.markdown("""
-    <div style="background: linear-gradient(135deg, var(--accent), var(--accent2)); 
-                color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
-        <h2 style="color: white; margin: 0;">⚙️ Tarka Control Center</h2>
-    </div>
-    """, unsafe_allow_html=True)
+def render_sidebar_secondary():
+    """Render only secondary sidebar controls."""
+    st.sidebar.title("⚙️ Settings")
     
     # Theme toggle
     theme_options = ["Light", "Dark"]
@@ -314,162 +333,7 @@ def render_sidebar_controls():
     
     st.sidebar.markdown("---")
     
-    # App mode
-    app_mode = st.sidebar.radio(
-        "App Mode",
-        ["Simple", "Advanced"],
-        index=0 if st.session_state.simple_mode else 1
-    )
-    st.session_state.simple_mode = (app_mode == "Simple")
-    st.session_state.advanced_mode = (app_mode == "Advanced")
-    
-    # Compare mode toggle
-    compare_mode = st.sidebar.checkbox("Compare Two Scenarios", value=st.session_state.compare_mode)
-    st.session_state.compare_mode = compare_mode
-    if compare_mode:
-        st.sidebar.info("⚠️ Compare mode: Select Scenario B inputs below after setting Scenario A.")
-    
-    st.sidebar.markdown("---")
-    
-    # Scenario Presets (quick buttons)
-    st.sidebar.markdown("### 🎯 Quick Presets")
-    presets = {
-        "Startup MVP": {"traffic": "bursty", "control": "low", "cost": "sensitive"},
-        "High-traffic API": {"traffic": "steady", "control": "medium", "cost": "flexible"},
-        "Batch processing": {"traffic": "steady", "control": "medium", "cost": "sensitive"},
-        "Legacy migration": {"traffic": "steady", "control": "high", "cost": "flexible"}
-    }
-    
-    for name, values in presets.items():
-        if st.sidebar.button(name, use_container_width=True, key=f"preset_{name}"):
-            st.session_state.traffic = values["traffic"]
-            st.session_state.control = values["control"]
-            st.session_state.cost = values["cost"]
-            st.rerun()
-    
-    st.sidebar.markdown("---")
-    
-    # Main inputs (always in sidebar for mobile)
-    st.sidebar.markdown("### 📊 Requirements")
-    
-    traffic = st.sidebar.selectbox(
-        "🚦 Traffic pattern",
-        ["bursty", "steady"],
-        index=0 if st.session_state.traffic == "bursty" else 1,
-        format_func=lambda x: "Bursty / unpredictable" if x == "bursty" else "Steady / predictable"
-    )
-    
-    control = st.sidebar.selectbox(
-        "⚙️ Infrastructure control",
-        ["low", "medium", "high"],
-        index=["low", "medium", "high"].index(st.session_state.control),
-        format_func=lambda x: x.capitalize()
-    )
-    
-    cost = st.sidebar.selectbox(
-        "💰 Cost sensitivity",
-        ["sensitive", "flexible"],
-        index=0 if st.session_state.cost == "sensitive" else 1,
-        format_func=lambda x: "Very sensitive" if x == "sensitive" else "Flexible"
-    )
-    
-    st.session_state.traffic = traffic
-    st.session_state.control = control
-    st.session_state.cost = cost
-    
-    # Hard Constraints (Feature 1)
-    with st.sidebar.expander("🔒 Hard Constraints"):
-        max_exec_time = st.selectbox(
-            "Max execution time",
-            ["seconds", "minutes", "hours", "not sure"],
-            index=["seconds", "minutes", "hours", "not sure"].index(st.session_state.max_exec_time)
-        )
-        compliance = st.selectbox(
-            "Compliance sensitivity",
-            ["low", "medium", "high"],
-            index=["low", "medium", "high"].index(st.session_state.compliance)
-        )
-        cold_start = st.checkbox(
-            "Cold start tolerance",
-            value=st.session_state.cold_start_tolerance
-        )
-        st.session_state.max_exec_time = max_exec_time
-        st.session_state.compliance = compliance
-        st.session_state.cold_start_tolerance = cold_start
-    
-    # Bias Override (Feature 3)
-    with st.sidebar.expander("🎯 Preference Override"):
-        bias_options = ["None", "Serverless", "Containers", "Full Control"]
-        bias_idx = 0
-        if st.session_state.bias_override == "serverless":
-            bias_idx = 1
-        elif st.session_state.bias_override == "containers":
-            bias_idx = 2
-        elif st.session_state.bias_override == "control":
-            bias_idx = 3
-        
-        bias_choice = st.radio("I prefer", bias_options, index=bias_idx)
-        if bias_choice == "None":
-            st.session_state.bias_override = None
-        elif bias_choice == "Serverless":
-            st.session_state.bias_override = "serverless"
-        elif bias_choice == "Containers":
-            st.session_state.bias_override = "containers"
-        else:
-            st.session_state.bias_override = "control"
-    
-    # Advanced mode features
-    if st.session_state.advanced_mode:
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### ⚖️ Advanced")
-        
-        # Weighted inputs (if supported)
-        st.sidebar.markdown("**Input Weights**")
-        weight_traffic = st.sidebar.slider("Traffic", 0.0, 3.0, st.session_state.weights["traffic"], 0.1)
-        weight_control = st.sidebar.slider("Control", 0.0, 3.0, st.session_state.weights["control"], 0.1)
-        weight_cost = st.sidebar.slider("Cost", 0.0, 3.0, st.session_state.weights["cost"], 0.1)
-        st.session_state.weights = {
-            "traffic": weight_traffic,
-            "control": weight_control,
-            "cost": weight_cost
-        }
-        
-        # Sensitivity Visualization (Feature 7)
-        with st.sidebar.expander("📊 Sensitivity (Visualization)"):
-            st.caption("What-if visualization; does not change ranking")
-            sens_cost = st.slider("Cost emphasis", 0.0, 3.0, st.session_state.sensitivity_weights["cost"], 0.1)
-            sens_ops = st.slider("Ops emphasis", 0.0, 3.0, st.session_state.sensitivity_weights["ops"], 0.1)
-            sens_control = st.slider("Control emphasis", 0.0, 3.0, st.session_state.sensitivity_weights["control"], 0.1)
-            st.session_state.sensitivity_weights = {
-                "cost": sens_cost,
-                "ops": sens_ops,
-                "control": sens_control
-            }
-        
-        # Reflection Mode (Feature 15)
-        reflection = st.sidebar.checkbox("Reflection Mode", value=st.session_state.reflection_mode)
-        st.session_state.reflection_mode = reflection
-    
-    # Deterministic Mode (Feature 9)
-    st.sidebar.markdown("---")
-    deterministic = st.sidebar.checkbox("Deterministic output", value=st.session_state.deterministic_mode)
-    st.session_state.deterministic_mode = deterministic
-    
-    # Architecture Review Mode (Feature 10)
-    arch_review = st.sidebar.checkbox("Architecture review language", value=st.session_state.arch_review_mode)
-    st.session_state.arch_review_mode = arch_review
-    
-    # Reset button
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🔄 Reset Inputs", use_container_width=True):
-        st.session_state.traffic = "bursty"
-        st.session_state.control = "low"
-        st.session_state.cost = "sensitive"
-        st.session_state.results = None
-        st.session_state.weights = {"traffic": 1.0, "control": 1.0, "cost": 1.0}
-        st.rerun()
-    
-    # About (Feature 13)
+    # About
     with st.sidebar.expander("ℹ️ About"):
         st.markdown("""
         **Decision-support tool** — not a recommendation engine.
@@ -479,7 +343,7 @@ def render_sidebar_controls():
         **No single 'best' answer** — use trade-offs to decide.
         """)
     
-    # Help (Feature 16)
+    # Help
     with st.sidebar.expander("❓ Help"):
         st.markdown("""
         **Run locally:**
@@ -498,7 +362,7 @@ def render_sidebar_controls():
         - All logic runs locally
         """)
     
-    # Glossary (Feature 5)
+    # Glossary
     with st.sidebar.expander("📖 Glossary"):
         st.markdown("""
         **Cold start:** Initial delay when a function/container starts from idle state.
@@ -511,113 +375,193 @@ def render_sidebar_controls():
         
         **Steady traffic:** Predictable, consistent usage patterns.
         """)
+
+# ============================================================================
+# CONTROL BAR (PRIMARY CONTROLS)
+# ============================================================================
+
+def render_control_bar():
+    """Render primary control bar at top of main page."""
+    st.markdown("### 🎛️ Control Bar")
     
-    # Assumptions expander
-    with st.sidebar.expander("📋 Assumptions"):
-        assumptions = get_assumptions()
-        for assumption in assumptions:
-            st.markdown(f"• {assumption}")
-    
-    # Export controls (only show if results exist)
-    if st.session_state.results:
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### 📤 Export")
+    with st.container():
+        col1, col2, col3, col4 = st.columns([2, 3, 2, 1])
         
-        ranked = st.session_state.results.get('ranked', [])
-        if ranked:
-            traffic_exp = st.session_state.results.get('traffic', traffic)
-            control_exp = st.session_state.results.get('control', control)
-            cost_exp = st.session_state.results.get('cost', cost)
-            
-            # Markdown download
-            md_content = f"""# Tarka Decision Analysis
-
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Input Summary
-- Traffic: {traffic_exp}
-- Control: {control_exp}
-- Cost: {cost_exp}
-
-## Results
-"""
-            for idx, opt in enumerate(ranked):
-                md_content += f"""
-### {idx+1}. {opt.name}
-Score: {opt.score}
-Use when: {opt.best_for}
-Pros: {', '.join(opt.pros)}
-Cons: {', '.join(opt.cons)}
-"""
-            md_content += "\n## Disclaimer\nThis is not a single best answer; use trade-offs to decide.\n"
-            
-            st.sidebar.download_button(
-                "📄 Download Markdown",
-                data=md_content,
-                file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                mime="text/markdown",
-                use_container_width=True
+        with col1:
+            # Mode toggle
+            app_mode = st.radio(
+                "Mode",
+                ["Simple", "Advanced"],
+                index=0 if st.session_state.simple_mode else 1,
+                horizontal=True
             )
+            st.session_state.simple_mode = (app_mode == "Simple")
+            st.session_state.advanced_mode = (app_mode == "Advanced")
+        
+        with col2:
+            # Presets
+            st.markdown("**Presets:**")
+            preset_cols = st.columns(4)
+            presets = {
+                "Startup MVP": {"traffic": "bursty", "control": "low", "cost": "sensitive"},
+                "High-traffic API": {"traffic": "steady", "control": "medium", "cost": "flexible"},
+                "Batch": {"traffic": "steady", "control": "medium", "cost": "sensitive"},
+                "Legacy": {"traffic": "steady", "control": "high", "cost": "flexible"}
+            }
             
-            # Copy summary text area
-            summary_text = f"""Inputs: Traffic={traffic_exp}, Control={control_exp}, Cost={cost_exp}
-
-Ranked Options:
-"""
-            for idx, opt in enumerate(ranked):
-                summary_text += f"{idx+1}. {opt.name} (Score: {opt.score}) - {opt.best_for}\n"
+            for idx, (name, values) in enumerate(presets.items()):
+                with preset_cols[idx]:
+                    if st.button(name, use_container_width=True, key=f"preset_{name}"):
+                        st.session_state.traffic = values["traffic"]
+                        st.session_state.control = values["control"]
+                        st.session_state.cost = values["cost"]
+                        st.rerun()
+        
+        with col3:
+            # Compare mode toggle
+            compare_mode = st.checkbox("Compare Two Scenarios", value=st.session_state.compare_mode)
+            st.session_state.compare_mode = compare_mode
             
-            summary_text += f"""
-Trade-off Summary:
-Top choice: {ranked[0].name}
-Gains: {', '.join(ranked[0].pros[:2])}
-Trade-offs: {', '.join(ranked[0].cons[:2])}
-
-Disclaimer: This is not a single best answer; use trade-offs to decide.
-"""
+            # Reset button
+            if st.button("🔄 Reset", use_container_width=True):
+                st.session_state.traffic = "bursty"
+                st.session_state.control = "low"
+                st.session_state.cost = "sensitive"
+                st.session_state.results = None
+                st.session_state.weights = {"traffic": 1.0, "control": 1.0, "cost": 1.0}
+                st.rerun()
+        
+        with col4:
+            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
+    
+    st.markdown("---")
+    
+    # Requirements inputs
+    st.markdown("### 📊 Requirements")
+    req_col1, req_col2, req_col3 = st.columns(3)
+    
+    with req_col1:
+        traffic = st.selectbox(
+            "🚦 Traffic pattern",
+            ["bursty", "steady"],
+            index=0 if st.session_state.traffic == "bursty" else 1,
+            format_func=lambda x: "Bursty / unpredictable" if x == "bursty" else "Steady / predictable"
+        )
+    
+    with req_col2:
+        control = st.selectbox(
+            "⚙️ Infrastructure control",
+            ["low", "medium", "high"],
+            index=["low", "medium", "high"].index(st.session_state.control),
+            format_func=lambda x: x.capitalize()
+        )
+    
+    with req_col3:
+        cost = st.selectbox(
+            "💰 Cost sensitivity",
+            ["sensitive", "flexible"],
+            index=0 if st.session_state.cost == "sensitive" else 1,
+            format_func=lambda x: "Very sensitive" if x == "sensitive" else "Flexible"
+        )
+    
+    st.session_state.traffic = traffic
+    st.session_state.control = control
+    st.session_state.cost = cost
+    
+    # Advanced mode features
+    if st.session_state.advanced_mode:
+        st.markdown("---")
+        st.markdown("### ⚖️ Advanced Options")
+        
+        adv_col1, adv_col2, adv_col3 = st.columns(3)
+        
+        with adv_col1:
+            st.markdown("**Input Weights**")
+            weight_traffic = st.slider("Traffic", 0.0, 3.0, st.session_state.weights["traffic"], 0.1)
+            weight_control = st.slider("Control", 0.0, 3.0, st.session_state.weights["control"], 0.1)
+            weight_cost = st.slider("Cost", 0.0, 3.0, st.session_state.weights["cost"], 0.1)
+            st.session_state.weights = {
+                "traffic": weight_traffic,
+                "control": weight_control,
+                "cost": weight_cost
+            }
+        
+        with adv_col2:
+            st.markdown("**Hard Constraints**")
+            max_exec_time = st.selectbox(
+                "Max execution time",
+                ["seconds", "minutes", "hours", "not sure"],
+                index=["seconds", "minutes", "hours", "not sure"].index(st.session_state.max_exec_time)
+            )
+            compliance = st.selectbox(
+                "Compliance sensitivity",
+                ["low", "medium", "high"],
+                index=["low", "medium", "high"].index(st.session_state.compliance)
+            )
+            cold_start = st.checkbox("Cold start tolerance", value=st.session_state.cold_start_tolerance)
+            st.session_state.max_exec_time = max_exec_time
+            st.session_state.compliance = compliance
+            st.session_state.cold_start_tolerance = cold_start
+        
+        with adv_col3:
+            st.markdown("**Preferences**")
+            bias_options = ["None", "Serverless", "Containers", "Full Control"]
+            bias_idx = 0
+            if st.session_state.bias_override == "serverless":
+                bias_idx = 1
+            elif st.session_state.bias_override == "containers":
+                bias_idx = 2
+            elif st.session_state.bias_override == "control":
+                bias_idx = 3
             
-            st.sidebar.text_area("Copy Decision Summary", value=summary_text, height=150, key="sidebar_summary")
+            bias_choice = st.radio("I prefer", bias_options, index=bias_idx)
+            if bias_choice == "None":
+                st.session_state.bias_override = None
+            elif bias_choice == "Serverless":
+                st.session_state.bias_override = "serverless"
+            elif bias_choice == "Containers":
+                st.session_state.bias_override = "containers"
+            else:
+                st.session_state.bias_override = "control"
+            
+            deterministic = st.checkbox("Deterministic output", value=st.session_state.deterministic_mode)
+            st.session_state.deterministic_mode = deterministic
+            
+            arch_review = st.checkbox("Architecture review language", value=st.session_state.arch_review_mode)
+            st.session_state.arch_review_mode = arch_review
+    
+    # Compare button
+    st.markdown("---")
+    if st.button("🔍 Compare Options", type="primary", use_container_width=True):
+        weights = st.session_state.weights if st.session_state.advanced_mode else None
+        ranked, details = evaluate(traffic, control, cost, weights)
+        st.session_state.results = {
+            'ranked': ranked,
+            'details': details,
+            'traffic': traffic,
+            'control': control,
+            'cost': cost
+        }
+        st.rerun()
     
     return traffic, control, cost
 
 # ============================================================================
-# MAIN PAGE RENDERING
+# RESULTS RENDERING
 # ============================================================================
-
-def render_hero():
-    """Render hero header section."""
-    # Subtle tip about menu vs sidebar
-    st.markdown("""
-    <div style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; padding: 0.5rem; background-color: var(--card); border-radius: 8px;">
-        💡 Tip: App controls are in the sidebar. The ⋮ menu is Streamlit system options.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="hero-header">Tarka — Cloud Compute Referee</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-subtitle">Compare AWS compute options by understanding trade-offs</div>', unsafe_allow_html=True)
-    
-    # Offline badge (Feature 14)
-    st.markdown('<div class="offline-badge">Offline • Deterministic • No external APIs</div>', unsafe_allow_html=True)
-    
-    # Mobile hint (Feature 16)
-    st.markdown("""
-    <div class="mobile-hint">
-        ☰ Use the sidebar for controls. Tap the arrow to collapse.
-    </div>
-    """, unsafe_allow_html=True)
 
 def render_results(ranked, details, traffic, control, cost):
     """Render results section with all features."""
     if not ranked:
         return
     
-    # Input summary
+    # Input Summary
     st.markdown("### 📋 Input Summary")
     st.markdown(f"""
     <div class="summary-card">
-        <strong>Traffic:</strong> {traffic.capitalize()}<br>
-        <strong>Control:</strong> {control.capitalize()}<br>
-        <strong>Cost:</strong> {cost.capitalize()}
+        <strong>Traffic pattern:</strong> {traffic.capitalize()}<br>
+        <strong>Infrastructure control:</strong> {control.capitalize()}<br>
+        <strong>Cost sensitivity:</strong> {cost.capitalize()}
     </div>
     """, unsafe_allow_html=True)
     
@@ -627,7 +571,7 @@ def render_results(ranked, details, traffic, control, cost):
     st.markdown(f'<div class="confidence-badge {conf_class}">Confidence: {conf_level.upper()}</div>', unsafe_allow_html=True)
     st.caption(conf_msg)
     
-    # Deterministic mode display (Feature 9)
+    # Deterministic mode display
     if st.session_state.deterministic_mode:
         with st.expander("🔍 Deterministic Output Details"):
             st.markdown("**Inputs used:**")
@@ -637,7 +581,7 @@ def render_results(ranked, details, traffic, control, cost):
                 st.code(f"{opt.name}: {opt.score}")
             st.markdown("**Note:** No randomness; no external calls.")
     
-    # Ranked options
+    # Ranked Options
     st.markdown("### 🎯 Ranked Options")
     
     max_score = max(opt.score for opt in ranked) if ranked else 1
@@ -651,7 +595,7 @@ def render_results(ranked, details, traffic, control, cost):
         # Rank badge
         st.markdown(f'<span class="rank-badge">#{idx + 1}</span>', unsafe_allow_html=True)
         
-        # Preference badge (Feature 3)
+        # Preference badge
         if st.session_state.bias_override:
             if (st.session_state.bias_override == "serverless" and opt.name == "AWS Lambda") or \
                (st.session_state.bias_override == "containers" and "ECS" in opt.name) or \
@@ -670,13 +614,13 @@ def render_results(ranked, details, traffic, control, cost):
             </div>
             """, unsafe_allow_html=True)
         
-        # Use when / Recommended for (Feature 10)
+        # Use when / Recommended for
         if st.session_state.arch_review_mode:
             st.markdown(f"**Recommended for:** {opt.best_for}")
         else:
             st.markdown(f"**Use when:** {opt.best_for}")
         
-        # Explainability timeline (Feature 8)
+        # Explainability timeline
         with st.expander("📊 Explainability Timeline"):
             factors = ["traffic", "control", "cost"]
             for factor in factors:
@@ -712,12 +656,12 @@ def render_results(ranked, details, traffic, control, cost):
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Eliminated Options (Feature 2)
+    # Eliminated Options
     if len(ranked) > 0:
         eliminated = []
         top_score = ranked[0].score
         for opt in ranked[1:]:
-            if top_score - opt.score >= 2:  # Threshold-based
+            if top_score - opt.score >= 2:
                 eliminated.append(opt)
         
         if eliminated:
@@ -725,7 +669,7 @@ def render_results(ranked, details, traffic, control, cost):
             for opt in eliminated:
                 st.markdown(f"**{opt.name}** — Score gap indicates less alignment with current constraints.")
     
-    # What You're Trading Away (Feature 4)
+    # What You're Trading Away
     if ranked:
         top_opt = ranked[0]
         st.markdown("### 🔄 What You're Trading Away")
@@ -734,7 +678,7 @@ def render_results(ranked, details, traffic, control, cost):
         st.markdown(f"**You gain:** {gains}")
         st.markdown(f"**You trade away:** {trades}")
     
-    # Hard Constraints Warnings (Feature 1)
+    # Hard Constraints Warnings
     warnings = []
     if st.session_state.max_exec_time in ["seconds", "minutes"]:
         warnings.append("Lambda has execution time limits; review max duration requirements.")
@@ -748,29 +692,82 @@ def render_results(ranked, details, traffic, control, cost):
         for warning in warnings:
             st.markdown(f"• {warning}")
     
-    # What Would Change (existing feature)
+    # What Would Change
     suggestions = get_what_would_change(ranked[0].name, traffic, control, cost)
     st.markdown("### 🔄 What Would Change This Decision?")
     for suggestion in suggestions:
         st.markdown(f"• {suggestion}")
     
-    # Reflection Mode (Feature 15)
+    # Reflection Mode
     if st.session_state.reflection_mode and ranked:
         st.markdown("### 💭 Reflection")
         top_opt = ranked[0]
         st.markdown(f"If I were building this system, I'd start with **{top_opt.name}** when constraints look like {traffic} traffic, {control} control needs, and {cost} cost sensitivity. This aligns with '{top_opt.best_for}'.")
     
-    # Sensitivity Visualization (Feature 7)
-    if st.session_state.advanced_mode:
-        st.markdown("### 📊 Sensitivity Visualization")
-        st.caption("What-if emphasis values (does not change ranking)")
-        sens = st.session_state.sensitivity_weights
-        st.progress(sens["cost"] / 3.0, text=f"Cost: {sens['cost']:.1f}")
-        st.progress(sens["ops"] / 3.0, text=f"Ops: {sens['ops']:.1f}")
-        st.progress(sens["control"] / 3.0, text=f"Control: {sens['control']:.1f}")
+    # Exports Card
+    st.markdown("### 📤 Exports")
+    st.markdown('<div class="exports-card">', unsafe_allow_html=True)
     
-    # JSON download (keep in main page for convenience)
-    st.markdown("---")
+    col_exp1, col_exp2 = st.columns(2)
+    
+    with col_exp1:
+        # Markdown download
+        md_content = f"""# Tarka Decision Analysis
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Input Summary
+- Traffic: {traffic}
+- Control: {control}
+- Cost: {cost}
+
+## Confidence / Sensitivity
+**Level:** {conf_level.upper()}
+**Message:** {conf_msg}
+
+## Recommended Options (Ranked)
+"""
+        for idx, opt in enumerate(ranked):
+            md_content += f"""
+### {idx + 1}. {opt.name}
+Score: {opt.score}
+Use when: {opt.best_for}
+Pros: {', '.join(opt.pros)}
+Cons: {', '.join(opt.cons)}
+"""
+        md_content += "\n## Disclaimer\nThis is not a single best answer; use trade-offs to decide.\n"
+        
+        st.download_button(
+            "📄 Download Markdown",
+            data=md_content,
+            file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+    
+    with col_exp2:
+        # Copy summary text area
+        summary_text = f"""Inputs: Traffic={traffic}, Control={control}, Cost={cost}
+
+Ranked Options:
+"""
+        for idx, opt in enumerate(ranked):
+            summary_text += f"{idx+1}. {opt.name} (Score: {opt.score}) - {opt.best_for}\n"
+        
+        summary_text += f"""
+Trade-off Summary:
+Top choice: {ranked[0].name}
+Gains: {', '.join(ranked[0].pros[:2])}
+Trade-offs: {', '.join(ranked[0].cons[:2])}
+
+Disclaimer: This is not a single best answer; use trade-offs to decide.
+"""
+        
+        st.text_area("Copy Decision Summary", value=summary_text, height=150, key="summary_text")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # JSON download
     snapshot = {
         "timestamp": datetime.now().isoformat(),
         "inputs": {"traffic": traffic, "control": control, "cost": cost},
@@ -797,11 +794,11 @@ def render_results(ranked, details, traffic, control, cost):
         use_container_width=True
     )
     
-    # Footer (Feature 12)
+    # Footer
     st.markdown('<div class="footer-text">Decision logic: v1 (deterministic, local)</div>', unsafe_allow_html=True)
     
-    # Why no single best answer (Feature 13)
-    with st.expander("🤔 Why no single 'best' answer?"):
+    # Why no single best answer
+    with st.expander("🤔 Why no single \'best\' answer?"):
         st.markdown("""
         This tool supports **reasoning** rather than automation.
         
@@ -817,24 +814,22 @@ def render_results(ranked, details, traffic, control, cost):
 
 def main():
     """Main application flow."""
-    # Render sidebar and get inputs
-    traffic, control, cost = render_sidebar_controls()
+    # Render sidebar (secondary only)
+    render_sidebar_secondary()
     
-    # Render hero
-    render_hero()
+    # Hero section
+    st.markdown("""
+    <div style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; padding: 0.5rem; background-color: var(--card); border-radius: 8px;">
+        💡 Tip: App controls are in the main page. The ⋮ menu is Streamlit system options.
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Compare button
-    if st.button("🔍 Compare Options", type="primary", use_container_width=True):
-        weights = st.session_state.weights if st.session_state.advanced_mode else None
-        ranked, details = evaluate(traffic, control, cost, weights)
-        st.session_state.results = {
-            'ranked': ranked,
-            'details': details,
-            'traffic': traffic,
-            'control': control,
-            'cost': cost
-        }
-        st.rerun()
+    st.markdown('<div class="hero-header">Tarka — Cloud Compute Referee</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-subtitle">Compare AWS compute options by understanding trade-offs</div>', unsafe_allow_html=True)
+    st.markdown('<div class="offline-badge">Offline • Deterministic • No external APIs</div>', unsafe_allow_html=True)
+    
+    # Render control bar and get inputs
+    traffic, control, cost = render_control_bar()
     
     # Render results if available
     if st.session_state.results:
