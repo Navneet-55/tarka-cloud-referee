@@ -63,28 +63,42 @@ def apply_base_css(theme):
     """
     if theme == "dark":
         bg_color = "#0e1117"
-        card_bg = "#1e2130"
+        card_bg = "#1a1f2e"  # Slightly lighter than bg for contrast
+        surface = "#252b3a"  # For cards/sections
+        surface2 = "#2d3443"  # For nested elements
         text_color = "#ffffff"
         muted_color = "#b0b0b0"
         border_color = "#3d4451"
         highlight_bg = "#2a2d3a"
+        sidebar_bg = "#151a28"  # Darker than main but not black
+        sidebar_border = "#2a2f3e"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
-        header_bg = "#1e2130"
+        header_bg = "#1a1f2e"
         header_text = "#ffffff"
+        button_bg = "#252b3a"
+        button_hover = "#2d3443"
+        input_bg = "#1a1f2e"
     else:  # light
         bg_color = "#ffffff"
         card_bg = "#f8f9fa"
+        surface = "#ffffff"
+        surface2 = "#f0f0f0"
         text_color = "#1a1a1a"
         muted_color = "#666666"
         border_color = "#d0d0d0"
         highlight_bg = "#e8f4f8"
+        sidebar_bg = "#f8f9fa"
+        sidebar_border = "#e0e0e0"
         primary_color = "#ff4b4b"
         secondary_color = "#00d4aa"
         accent_color = "#6366f1"
         header_bg = "#ffffff"
         header_text = "#1a1a1a"
+        button_bg = "#ffffff"
+        button_hover = "#f0f0f0"
+        input_bg = "#ffffff"
     
     css = f"""
     <style>
@@ -106,12 +120,19 @@ def apply_base_css(theme):
     :root {{
         --bg: {bg_color};
         --card: {card_bg};
+        --surface: {surface};
+        --surface2: {surface2};
         --text: {text_color};
         --muted: {muted_color};
         --border: {border_color};
         --accent: {primary_color};
         --accent2: {secondary_color};
         --highlight-bg: {highlight_bg};
+        --sidebar-bg: {sidebar_bg};
+        --sidebar-border: {sidebar_border};
+        --button-bg: {button_bg};
+        --button-hover: {button_hover};
+        --input-bg: {input_bg};
     }}
     
     /* Ensure strong text contrast - no opacity */
@@ -119,8 +140,32 @@ def apply_base_css(theme):
         background-color: var(--bg);
     }}
     
+    /* Sidebar styling - high contrast */
+    [data-testid="stSidebar"] {{
+        background-color: var(--sidebar-bg) !important;
+        border-right: 1px solid var(--sidebar-border);
+    }}
+    
+    [data-testid="stSidebar"] * {{
+        color: var(--text) !important;
+    }}
+    
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div {{
+        color: var(--text) !important;
+    }}
+    
     /* Explicit text colors for all elements - no opacity tricks */
     body {{
+        color: var(--text) !important;
+    }}
+    
+    .stApp > div > div > div > div {{
         color: var(--text) !important;
     }}
     
@@ -133,22 +178,94 @@ def apply_base_css(theme):
         color: var(--text) !important;
     }}
     
-    /* Streamlit labels and inputs */
+    /* Streamlit labels and inputs - force readable colors */
     .stSelectbox label, .stSlider label, .stRadio label, .stCheckbox label {{
         color: var(--text) !important;
     }}
     
-    /* Hero section */
+    /* Button styling - fix white pills */
+    .stButton > button {{
+        background-color: var(--button-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s !important;
+    }}
+    
+    .stButton > button:hover {{
+        background-color: var(--button-hover) !important;
+        border-color: var(--accent) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }}
+    
+    /* Selectbox styling */
+    .stSelectbox > div > div {{
+        background-color: var(--input-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+    
+    .stSelectbox > div > div > div {{
+        color: var(--text) !important;
+    }}
+    
+    /* Radio button styling */
+    .stRadio > div > label {{
+        color: var(--text) !important;
+    }}
+    
+    .stRadio > div > div > label {{
+        color: var(--text) !important;
+    }}
+    
+    /* Checkbox styling */
+    .stCheckbox > label {{
+        color: var(--text) !important;
+    }}
+    
+    /* Slider styling */
+    .stSlider > div > div {{
+        background-color: var(--input-bg) !important;
+    }}
+    
+    .stSlider > div > div > div {{
+        background-color: var(--accent) !important;
+    }}
+    
+    /* Text input styling */
+    .stTextInput > div > div > input {{
+        background-color: var(--input-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+    
+    .stTextArea > div > div > textarea {{
+        background-color: var(--input-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+    
+    /* Hero section - readable title */
     .hero-header {{
         text-align: center;
         padding: 2rem 1rem;
-        background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--text) !important;
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
+    }}
+    
+    .hero-header::after {{
+        content: '';
+        display: block;
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        margin: 0.5rem auto;
+        border-radius: 2px;
     }}
     
     .hero-subtitle {{
@@ -172,30 +289,51 @@ def apply_base_css(theme):
     
     /* Control bar */
     .control-bar {{
-        background-color: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }}
-    
-    /* Cards */
-    .summary-card {{
-        background-color: var(--card);
+        background-color: var(--surface);
         border: 2px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }}
     
-    .option-card {{
-        background-color: var(--card);
+    /* Requirements section card */
+    .requirements-card {{
+        background-color: var(--surface);
         border: 2px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }}
+    
+    /* Advanced options card */
+    .advanced-card {{
+        background-color: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }}
+    
+    /* Cards - better contrast separation */
+    .summary-card {{
+        background-color: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }}
+    
+    .option-card {{
+        background-color: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
     }}
     
     .best-fit-card {{
@@ -203,16 +341,17 @@ def apply_base_css(theme):
         border: 3px solid var(--accent2);
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 6px 12px rgba(0, 212, 170, 0.3);
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 12px rgba(0, 212, 170, 0.4);
     }}
     
     .exports-card {{
-        background-color: var(--card);
+        background-color: var(--surface);
         border: 2px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }}
     
     /* Badges */
@@ -294,17 +433,27 @@ def apply_base_css(theme):
             padding: 1rem 0.5rem;
         }}
         
-        .summary-card, .option-card, .best-fit-card, .exports-card {{
+        body, p, li, label, span, div {{
+            font-size: 16px !important;
+        }}
+        
+        .summary-card, .option-card, .best-fit-card, .exports-card,
+        .control-bar, .requirements-card, .advanced-card {{
             padding: 1rem;
-            margin: 0.5rem 0;
+            margin: 1rem 0;
         }}
         
         .control-bar {{
-            padding: 0.75rem;
+            padding: 1rem;
         }}
         
         [class*="stButton"] {{
             width: 100% !important;
+        }}
+        
+        /* Increase spacing on mobile */
+        .stMarkdown {{
+            margin-bottom: 1rem;
         }}
     }}
     </style>
@@ -378,6 +527,7 @@ def render_sidebar_secondary():
 def render_control_bar():
     """Render primary control bar at top of main page."""
     st.markdown("### 🎛️ Control Bar")
+    st.markdown('<div class="control-bar">', unsafe_allow_html=True)
     
     with st.container():
         col1, col2, col3, col4 = st.columns([2, 3, 2, 1])
@@ -429,10 +579,12 @@ def render_control_bar():
         with col4:
             st.markdown("<br>", unsafe_allow_html=True)  # Spacing
     
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("---")
     
-    # Requirements inputs
+    # Requirements inputs - in a card
     st.markdown("### 📊 Requirements")
+    st.markdown('<div class="requirements-card">', unsafe_allow_html=True)
     req_col1, req_col2, req_col3 = st.columns(3)
     
     with req_col1:
@@ -463,8 +615,13 @@ def render_control_bar():
     st.session_state.control = control
     st.session_state.cost = cost
     
-    # Advanced mode features
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Advanced mode features - in a card
     if st.session_state.advanced_mode:
+        st.markdown("---")
+        st.markdown("### ⚖️ Advanced Options")
+        st.markdown('<div class="advanced-card">', unsafe_allow_html=True)
         st.markdown("---")
         st.markdown("### ⚖️ Advanced Options")
         
@@ -524,6 +681,8 @@ def render_control_bar():
             
             arch_review = st.checkbox("Architecture review language", value=st.session_state.arch_review_mode)
             st.session_state.arch_review_mode = arch_review
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Compare button
     st.markdown("---")
