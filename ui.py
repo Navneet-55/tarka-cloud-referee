@@ -65,6 +65,7 @@ def apply_base_css(theme):
         bg_color = "#0e1117"
         card_bg = "#1e2130"
         text_color = "#ffffff"  # Full opacity for mobile
+        muted_color = "#b0b0b0"
         border_color = "#3d4451"
         highlight_bg = "#2a2d3a"
         primary_color = "#ff4b4b"
@@ -74,6 +75,7 @@ def apply_base_css(theme):
         bg_color = "#ffffff"
         card_bg = "#f8f9fa"
         text_color = "#1a1a1a"  # Strong contrast, no opacity
+        muted_color = "#666666"
         border_color = "#d0d0d0"
         highlight_bg = "#e8f4f8"
         primary_color = "#ff4b4b"
@@ -82,36 +84,37 @@ def apply_base_css(theme):
     
     css = f"""
     <style>
-    /* Hide Streamlit chrome */
-    #MainMenu {{ visibility: hidden; }}
-    header {{ visibility: hidden; }}
-    footer {{ visibility: hidden; }}
-    [data-testid="stToolbar"] {{ display: none; }}
-    [data-testid="stHeader"] {{ display: none; }}
-    [data-testid="stDecoration"] {{ display: none; }}
-    [data-testid="stStatusWidget"] {{ display: none; }}
-    .stDeployButton {{ display: none; }}
+    /* Keep Streamlit menu visible - only reduce header padding */
+    header[data-testid="stHeader"] {{
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }}
     
     /* Base theme variables */
     :root {{
-        --bg-color: {bg_color};
-        --card-bg: {card_bg};
-        --text-color: {text_color};
-        --border-color: {border_color};
-        --primary-color: {primary_color};
-        --secondary-color: {secondary_color};
-        --accent-color: {accent_color};
+        --bg: {bg_color};
+        --card: {card_bg};
+        --text: {text_color};
+        --muted: {muted_color};
+        --border: {border_color};
+        --accent: {primary_color};
+        --accent2: {secondary_color};
         --highlight-bg: {highlight_bg};
     }}
     
     /* Ensure strong text contrast - no opacity tricks */
     .stApp {{
-        background-color: var(--bg-color);
+        background-color: var(--bg);
     }}
     
-    /* Explicit text colors for all elements */
+    /* Explicit text colors for all elements - no opacity */
     p, li, label, span, div, h1, h2, h3, h4, h5, h6 {{
-        color: var(--text-color) !important;
+        color: var(--text) !important;
+    }}
+    
+    /* Ensure Streamlit markdown elements have proper color */
+    .stMarkdown, .stMarkdown p, .stMarkdown li {{
+        color: var(--text) !important;
     }}
     
     /* Hero header */
@@ -130,7 +133,7 @@ def apply_base_css(theme):
     
     .hero-subtitle {{
         text-align: center;
-        color: var(--text-color);
+        color: var(--text);
         font-size: 1.1rem;
         margin-bottom: 1rem;
         font-weight: 500;
@@ -138,7 +141,7 @@ def apply_base_css(theme):
     
     .offline-badge {{
         display: inline-block;
-        background: var(--secondary-color);
+        background: var(--accent2);
         color: white;
         padding: 0.4rem 0.8rem;
         border-radius: 12px;
@@ -149,8 +152,8 @@ def apply_base_css(theme):
     
     /* Cards */
     .summary-card {{
-        background-color: var(--card-bg);
-        border: 2px solid var(--border-color);
+        background-color: var(--card);
+        border: 2px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
@@ -158,8 +161,8 @@ def apply_base_css(theme):
     }}
     
     .option-card {{
-        background-color: var(--card-bg);
-        border: 2px solid var(--border-color);
+        background-color: var(--card);
+        border: 2px solid var(--border);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
@@ -168,7 +171,7 @@ def apply_base_css(theme):
     
     .best-fit-card {{
         background-color: var(--highlight-bg);
-        border: 3px solid var(--secondary-color);
+        border: 3px solid var(--accent2);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
@@ -178,7 +181,7 @@ def apply_base_css(theme):
     /* Badges */
     .rank-badge {{
         display: inline-block;
-        background: var(--primary-color);
+        background: var(--accent);
         color: white;
         padding: 0.3rem 0.8rem;
         border-radius: 12px;
@@ -189,7 +192,7 @@ def apply_base_css(theme):
     
     .score-badge {{
         display: inline-block;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
         color: white;
         padding: 0.5rem 1.2rem;
         border-radius: 20px;
@@ -241,13 +244,13 @@ def apply_base_css(theme):
     
     /* Mobile sidebar hint */
     .mobile-hint {{
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
+        background-color: var(--card);
+        border: 1px solid var(--border);
         border-radius: 8px;
         padding: 0.75rem;
         margin: 1rem 0;
         font-size: 0.9rem;
-        color: var(--text-color);
+        color: var(--text);
         text-align: center;
     }}
     
@@ -255,21 +258,21 @@ def apply_base_css(theme):
     .footer-text {{
         text-align: center;
         padding: 1rem;
-        color: var(--text-color);
+        color: var(--text);
         font-size: 0.85rem;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid var(--border);
         margin-top: 2rem;
     }}
     
     /* Ensure all Streamlit elements have proper colors */
     .stSelectbox label, .stSlider label, .stRadio label {{
-        color: var(--text-color) !important;
+        color: var(--text) !important;
     }}
     
     /* Progress bars */
     .score-meter {{
         height: 8px;
-        background: var(--border-color);
+        background: var(--border);
         border-radius: 4px;
         overflow: hidden;
         margin-top: 0.5rem;
@@ -277,7 +280,7 @@ def apply_base_css(theme):
     
     .score-fill {{
         height: 100%;
-        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
         border-radius: 4px;
     }}
     </style>
@@ -293,7 +296,12 @@ apply_base_css(st.session_state.theme)
 
 def render_sidebar_controls():
     """Render all sidebar controls."""
-    st.sidebar.title("⚙️ Controls")
+    st.sidebar.markdown("""
+    <div style="background: linear-gradient(135deg, var(--accent), var(--accent2)); 
+                color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
+        <h2 style="color: white; margin: 0;">⚙️ Tarka Control Center</h2>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Theme toggle
     theme_options = ["Light", "Dark"]
@@ -314,6 +322,12 @@ def render_sidebar_controls():
     )
     st.session_state.simple_mode = (app_mode == "Simple")
     st.session_state.advanced_mode = (app_mode == "Advanced")
+    
+    # Compare mode toggle
+    compare_mode = st.sidebar.checkbox("Compare Two Scenarios", value=st.session_state.compare_mode)
+    st.session_state.compare_mode = compare_mode
+    if compare_mode:
+        st.sidebar.info("⚠️ Compare mode: Select Scenario B inputs below after setting Scenario A.")
     
     st.sidebar.markdown("---")
     
@@ -498,6 +512,72 @@ def render_sidebar_controls():
         **Steady traffic:** Predictable, consistent usage patterns.
         """)
     
+    # Assumptions expander
+    with st.sidebar.expander("📋 Assumptions"):
+        assumptions = get_assumptions()
+        for assumption in assumptions:
+            st.markdown(f"• {assumption}")
+    
+    # Export controls (only show if results exist)
+    if st.session_state.results:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 📤 Export")
+        
+        ranked = st.session_state.results.get('ranked', [])
+        if ranked:
+            traffic_exp = st.session_state.results.get('traffic', traffic)
+            control_exp = st.session_state.results.get('control', control)
+            cost_exp = st.session_state.results.get('cost', cost)
+            
+            # Markdown download
+            md_content = f"""# Tarka Decision Analysis
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Input Summary
+- Traffic: {traffic_exp}
+- Control: {control_exp}
+- Cost: {cost_exp}
+
+## Results
+"""
+            for idx, opt in enumerate(ranked):
+                md_content += f"""
+### {idx+1}. {opt.name}
+Score: {opt.score}
+Use when: {opt.best_for}
+Pros: {', '.join(opt.pros)}
+Cons: {', '.join(opt.cons)}
+"""
+            md_content += "\n## Disclaimer\nThis is not a single best answer; use trade-offs to decide.\n"
+            
+            st.sidebar.download_button(
+                "📄 Download Markdown",
+                data=md_content,
+                file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                use_container_width=True
+            )
+            
+            # Copy summary text area
+            summary_text = f"""Inputs: Traffic={traffic_exp}, Control={control_exp}, Cost={cost_exp}
+
+Ranked Options:
+"""
+            for idx, opt in enumerate(ranked):
+                summary_text += f"{idx+1}. {opt.name} (Score: {opt.score}) - {opt.best_for}\n"
+            
+            summary_text += f"""
+Trade-off Summary:
+Top choice: {ranked[0].name}
+Gains: {', '.join(ranked[0].pros[:2])}
+Trade-offs: {', '.join(ranked[0].cons[:2])}
+
+Disclaimer: This is not a single best answer; use trade-offs to decide.
+"""
+            
+            st.sidebar.text_area("Copy Decision Summary", value=summary_text, height=150, key="sidebar_summary")
+    
     return traffic, control, cost
 
 # ============================================================================
@@ -506,6 +586,13 @@ def render_sidebar_controls():
 
 def render_hero():
     """Render hero header section."""
+    # Subtle tip about menu vs sidebar
+    st.markdown("""
+    <div style="text-align: center; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; padding: 0.5rem; background-color: var(--card); border-radius: 8px;">
+        💡 Tip: App controls are in the sidebar. The ⋮ menu is Streamlit system options.
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown('<div class="hero-header">Tarka — Cloud Compute Referee</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-subtitle">Compare AWS compute options by understanding trade-offs</div>', unsafe_allow_html=True)
     
@@ -515,7 +602,7 @@ def render_hero():
     # Mobile hint (Feature 16)
     st.markdown("""
     <div class="mobile-hint">
-        ☰ Use the sidebar to adjust inputs. Tap the arrow to collapse.
+        ☰ Use the sidebar for controls. Tap the arrow to collapse.
     </div>
     """, unsafe_allow_html=True)
 
@@ -682,86 +769,33 @@ def render_results(ranked, details, traffic, control, cost):
         st.progress(sens["ops"] / 3.0, text=f"Ops: {sens['ops']:.1f}")
         st.progress(sens["control"] / 3.0, text=f"Control: {sens['control']:.1f}")
     
-    # Shareable Summary (Feature 11)
+    # JSON download (keep in main page for convenience)
     st.markdown("---")
-    st.markdown("### 📋 Shareable Decision Summary")
-    summary_text = f"""Inputs: Traffic={traffic}, Control={control}, Cost={cost}
-
-Ranked Options:
-"""
-    for idx, opt in enumerate(ranked):
-        summary_text += f"{idx+1}. {opt.name} (Score: {opt.score}) - {opt.best_for}\n"
-    
-    summary_text += f"""
-Trade-off Summary:
-Top choice: {ranked[0].name}
-Gains: {', '.join(ranked[0].pros[:2])}
-Trade-offs: {', '.join(ranked[0].cons[:2])}
-
-Disclaimer: This is not a single best answer; use trade-offs to decide.
-"""
-    
-    st.text_area("Copy this summary", value=summary_text, height=200, key="summary_text")
-    
-    # Downloads
-    col_dl1, col_dl2 = st.columns(2)
-    
-    with col_dl1:
-        snapshot = {
-            "timestamp": datetime.now().isoformat(),
-            "inputs": {"traffic": traffic, "control": control, "cost": cost},
-            "confidence": {"level": conf_level, "message": conf_msg},
-            "results": [
-                {
-                    "rank": idx + 1,
-                    "name": opt.name,
-                    "score": opt.score,
-                    "use_when": opt.best_for,
-                    "pros": opt.pros,
-                    "cons": opt.cons
-                }
-                for idx, opt in enumerate(ranked)
-            ],
-            "disclaimer": "This is not a single best answer; use trade-offs to decide."
-        }
-        json_str = json.dumps(snapshot, indent=2)
-        st.download_button(
-            "💾 Download JSON",
-            data=json_str,
-            file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            mime="application/json",
-            use_container_width=True
-        )
-    
-    with col_dl2:
-        md_content = f"""# Tarka Decision Analysis
-
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Input Summary
-- Traffic: {traffic}
-- Control: {control}
-- Cost: {cost}
-
-## Results
-"""
-        for idx, opt in enumerate(ranked):
-            md_content += f"""
-### {idx+1}. {opt.name}
-Score: {opt.score}
-Use when: {opt.best_for}
-Pros: {', '.join(opt.pros)}
-Cons: {', '.join(opt.cons)}
-"""
-        md_content += "\n## Disclaimer\nThis is not a single best answer; use trade-offs to decide.\n"
-        
-        st.download_button(
-            "📄 Download Markdown",
-            data=md_content,
-            file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
+    snapshot = {
+        "timestamp": datetime.now().isoformat(),
+        "inputs": {"traffic": traffic, "control": control, "cost": cost},
+        "confidence": {"level": conf_level, "message": conf_msg},
+        "results": [
+            {
+                "rank": idx + 1,
+                "name": opt.name,
+                "score": opt.score,
+                "use_when": opt.best_for,
+                "pros": opt.pros,
+                "cons": opt.cons
+            }
+            for idx, opt in enumerate(ranked)
+        ],
+        "disclaimer": "This is not a single best answer; use trade-offs to decide."
+    }
+    json_str = json.dumps(snapshot, indent=2)
+    st.download_button(
+        "💾 Download JSON",
+        data=json_str,
+        file_name=f"tarka_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        mime="application/json",
+        use_container_width=True
+    )
     
     # Footer (Feature 12)
     st.markdown('<div class="footer-text">Decision logic: v1 (deterministic, local)</div>', unsafe_allow_html=True)
