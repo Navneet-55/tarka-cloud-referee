@@ -17,7 +17,7 @@ This plan refactors the Tarka codebase to improve code quality while preserving 
   - **Property 1: Refactoring preserves behavior**
   - **Validates: Requirements 1.1, 2.1, 5.1**
 
-- [-] 2. Extract constants and add type aliases
+- [x] 2. Extract constants and add type aliases
   - [x] 2.1 Create `src/constants.py` module
     - Define scoring point constants (SCORE_TRAFFIC_MATCH, etc.)
     - Define confidence threshold constants
@@ -34,11 +34,11 @@ This plan refactors the Tarka codebase to improve code quality while preserving 
     - Import constants from constants module
     - _Requirements: 2.2_
   
-  - [ ] 2.4 Run behavior preservation tests
+  - [x] 2.4 Run behavior preservation tests
     - Verify all tests pass after constant extraction
     - _Requirements: 1.1, 2.1_
 
-- [ ] 3. Add comprehensive type hints
+- [-] 3. Add comprehensive type hints
   - [ ] 3.1 Add missing type hints to `src/tarka_core.py`
     - Add return type hints to all functions
     - Add parameter type hints to all functions

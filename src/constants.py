@@ -12,7 +12,8 @@ ConfidenceLevel = Literal["High", "Medium", "Low"]
 
 # Scoring constants
 SCORE_TRAFFIC_MATCH: Final[float] = 2.0
-SCORE_CONTROL_MATCH: Final[float] = 2.0
+SCORE_CONTROL_HIGH_MATCH: Final[float] = 2.0
+SCORE_CONTROL_MEDIUM_MATCH: Final[float] = 1.0
 SCORE_COST_MATCH: Final[float] = 1.0
 
 # Confidence threshold constants

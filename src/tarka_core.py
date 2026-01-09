@@ -10,7 +10,8 @@ from .models import (
 )
 from .constants import (
     SCORE_TRAFFIC_MATCH,
-    SCORE_CONTROL_MATCH,
+    SCORE_CONTROL_HIGH_MATCH,
+    SCORE_CONTROL_MEDIUM_MATCH,
     SCORE_COST_MATCH,
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
@@ -100,20 +101,20 @@ def _calculate_score_contributions(
                 reason=f"Steady traffic pattern (+{int(SCORE_TRAFFIC_MATCH)})"
             ))
         if inputs.control == "medium":
-            points = SCORE_CONTROL_MATCH * weights.get("control", 1.0)
+            points = SCORE_CONTROL_MEDIUM_MATCH * weights.get("control", 1.0)
             contributions.append(ScoreContribution(
                 factor="control",
                 points=points,
-                reason=f"Medium control requirement (+{int(SCORE_CONTROL_MATCH)})"
+                reason=f"Medium control requirement (+{int(SCORE_CONTROL_MEDIUM_MATCH)})"
             ))
     
     elif option.name == OPTION_EC2:
         if inputs.control == "high":
-            points = SCORE_CONTROL_MATCH * weights.get("control", 1.0)
+            points = SCORE_CONTROL_HIGH_MATCH * weights.get("control", 1.0)
             contributions.append(ScoreContribution(
                 factor="control",
                 points=points,
-                reason=f"High control requirement (+{int(SCORE_CONTROL_MATCH)})"
+                reason=f"High control requirement (+{int(SCORE_CONTROL_HIGH_MATCH)})"
             ))
     
     return contributions
