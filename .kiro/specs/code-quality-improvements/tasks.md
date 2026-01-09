@@ -29,7 +29,7 @@ This plan refactors the Tarka codebase to improve code quality while preserving 
     - Update EvaluationInputs to use type aliases
     - _Requirements: 1.1, 1.2, 1.5_
   
-  - [-] 2.3 Update `src/tarka_core.py` to use constants
+  - [x] 2.3 Update `src/tarka_core.py` to use constants
     - Replace magic numbers with named constants
     - Import constants from constants module
     - _Requirements: 2.2_
