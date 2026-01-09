@@ -1,0 +1,4 @@
+# file: /Users/navneet/Downloads/tarka/tarka-cloud-referee/src/tarka_core.py
+# hypothesis_version: 6.141.1
+
+[0.0, 1.0, 2.0, 'AWS EC2', 'AWS ECS (Fargate)', 'AWS Lambda', 'Automatic scaling', 'Cold start latency', 'High', 'Low', 'Medium', 'No server management', 'Pay per execution', 'Predictable runtime', 'bursty', 'control', 'cost', 'high', 'low', 'medium', 'sensitive', 'steady', 'traffic']
