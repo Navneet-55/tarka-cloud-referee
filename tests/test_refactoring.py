@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models import EvaluationInputs
 from src.tarka_core import evaluate, get_compute_options
+from src.exceptions import InvalidInputError
 
 
 class TestBehaviorPreservation(unittest.TestCase):
@@ -52,7 +53,7 @@ class TestBehaviorPreservation(unittest.TestCase):
         
         self.assertEqual(result.top_option.name, "AWS Lambda")
         # Lambda gets +2 for bursty, +1 for cost sensitive = 3.0
-        self.assertEqual(result.top_option.score, 3.0)
+        self.assertEqual(result.ranked_options[0].score, 3.0)
     
     def test_ecs_scores_highest_for_steady_medium(self):
         """ECS should score highest for steady traffic + medium control."""
@@ -65,7 +66,7 @@ class TestBehaviorPreservation(unittest.TestCase):
         
         self.assertEqual(result.top_option.name, "AWS ECS (Fargate)")
         # ECS gets +2 for steady, +1 for medium control = 3.0
-        self.assertEqual(result.top_option.score, 3.0)
+        self.assertEqual(result.ranked_options[0].score, 3.0)
     
     def test_ec2_scores_highest_for_high_control(self):
         """EC2 should score highest for high control needs."""
@@ -78,7 +79,7 @@ class TestBehaviorPreservation(unittest.TestCase):
         
         # EC2 gets +2 for high control, ECS gets +2 for steady
         # They should tie, but EC2 might rank first due to list order
-        top_names = [opt.name for opt in result.ranked_options[:2]]
+        top_names = [scored_opt.option.name for scored_opt in result.ranked_options[:2]]
         self.assertIn("AWS EC2", top_names)
         self.assertIn("AWS ECS (Fargate)", top_names)
     
@@ -95,12 +96,12 @@ class TestBehaviorPreservation(unittest.TestCase):
         
         # Compare top options
         self.assertEqual(result1.top_option.name, result2.top_option.name)
-        self.assertEqual(result1.top_option.score, result2.top_option.score)
+        self.assertEqual(result1.ranked_options[0].score, result2.ranked_options[0].score)
         
         # Compare all rankings
-        for opt1, opt2 in zip(result1.ranked_options, result2.ranked_options):
-            self.assertEqual(opt1.name, opt2.name)
-            self.assertEqual(opt1.score, opt2.score)
+        for scored_opt1, scored_opt2 in zip(result1.ranked_options, result2.ranked_options):
+            self.assertEqual(scored_opt1.option.name, scored_opt2.option.name)
+            self.assertEqual(scored_opt1.score, scored_opt2.score)
     
     def test_confidence_calculation(self):
         """Test confidence level calculation based on score gaps."""
@@ -135,15 +136,16 @@ class TestBehaviorPreservation(unittest.TestCase):
         # Check all options have details
         self.assertEqual(len(result.option_details), 3)
         
-        for opt in result.ranked_options:
+        for scored_opt in result.ranked_options:
+            opt = scored_opt.option
             self.assertIn(opt.name, result.option_details)
             details = result.option_details[opt.name]
             
             # Verify structure
             self.assertEqual(details.option.name, opt.name)
             self.assertIsInstance(details.rank, int)
-            self.assertIsInstance(details.contributions, list)
-            self.assertIsInstance(details.rationale, list)
+            self.assertIsInstance(details.contributions, tuple)
+            self.assertIsInstance(details.rationale, tuple)
             self.assertGreater(len(details.rationale), 0)
     
     def test_rationale_generation(self):
@@ -204,7 +206,7 @@ class TestBehaviorPreservation(unittest.TestCase):
         
         # Custom weights should affect the score
         # Note: weights are normalized, so we just check they're different
-        self.assertNotEqual(result_default.top_option.score, result_custom.top_option.score)
+        self.assertNotEqual(result_default.ranked_options[0].score, result_custom.ranked_options[0].score)
     
     def test_get_compute_options_returns_three(self):
         """Test that get_compute_options returns exactly 3 options."""
@@ -220,21 +222,21 @@ class TestBehaviorPreservation(unittest.TestCase):
         # Verify structure
         for opt in options:
             self.assertIsInstance(opt.name, str)
-            self.assertIsInstance(opt.pros, list)
-            self.assertIsInstance(opt.cons, list)
+            self.assertIsInstance(opt.pros, tuple)
+            self.assertIsInstance(opt.cons, tuple)
             self.assertIsInstance(opt.best_for, str)
             self.assertGreater(len(opt.pros), 0)
             self.assertGreater(len(opt.cons), 0)
     
     def test_watch_outs_property(self):
-        """Test that watch_outs property returns copy of cons."""
+        """Test that watch_outs property returns cons (immutable tuple)."""
         options = get_compute_options()
         
         for opt in options:
             watch_outs = opt.watch_outs
             self.assertEqual(watch_outs, opt.cons)
-            # Verify it's a copy, not the same list
-            self.assertIsNot(watch_outs, opt.cons)
+            # Since tuples are immutable, they can be the same object
+            self.assertIs(watch_outs, opt.cons)
     
     def test_zero_score_options(self):
         """Test options that don't match any criteria get zero score."""
@@ -246,25 +248,35 @@ class TestBehaviorPreservation(unittest.TestCase):
         result = evaluate(inputs)
         
         # Lambda should have 0 score (no matches)
-        lambda_opt = next(opt for opt in result.ranked_options if opt.name == "AWS Lambda")
-        self.assertEqual(lambda_opt.score, 0.0)
+        lambda_scored = next(scored_opt for scored_opt in result.ranked_options if scored_opt.option.name == "AWS Lambda")
+        self.assertEqual(lambda_scored.score, 0.0)
     
     def test_inputs_validation(self):
-        """Test that invalid inputs raise ValueError."""
+        """Test that invalid inputs raise InvalidInputError."""
         # Invalid traffic
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(InvalidInputError) as cm:
             EvaluationInputs(traffic="invalid", control="low", cost="sensitive")
         self.assertIn("traffic", str(cm.exception))
         
         # Invalid control
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(InvalidInputError) as cm:
             EvaluationInputs(traffic="bursty", control="invalid", cost="sensitive")
         self.assertIn("control", str(cm.exception))
         
         # Invalid cost
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(InvalidInputError) as cm:
             EvaluationInputs(traffic="bursty", control="low", cost="invalid")
         self.assertIn("cost", str(cm.exception))
+        
+        # Negative weights
+        with self.assertRaises(InvalidInputError) as cm:
+            EvaluationInputs(
+                traffic="bursty",
+                control="low",
+                cost="sensitive",
+                weights={"traffic": -1.0, "control": 1.0, "cost": 1.0}
+            )
+        self.assertIn("non-negative", str(cm.exception))
     
     def test_inputs_default_weights(self):
         """Test that inputs get default weights when not provided."""
@@ -334,8 +346,8 @@ class TestBehaviorPreservationProperties(unittest.TestCase):
         self.assertIn(result.confidence_level, ["High", "Medium", "Low"])
         
         # Verify all scores are non-negative
-        for opt in result.ranked_options:
-            self.assertGreaterEqual(opt.score, 0.0)
+        for scored_opt in result.ranked_options:
+            self.assertGreaterEqual(scored_opt.score, 0.0)
         
         # Verify rankings are in descending score order
         for i in range(len(result.ranked_options) - 1):
@@ -346,11 +358,11 @@ class TestBehaviorPreservationProperties(unittest.TestCase):
         
         # Verify option details exist for all options
         self.assertEqual(len(result.option_details), 3)
-        for opt in result.ranked_options:
-            self.assertIn(opt.name, result.option_details)
+        for scored_opt in result.ranked_options:
+            self.assertIn(scored_opt.option.name, result.option_details)
         
         # Verify what_would_change suggestions exist
-        self.assertIsInstance(result.what_would_change, list)
+        self.assertIsInstance(result.what_would_change, tuple)
         self.assertGreater(len(result.what_would_change), 0)
     
     @given(
@@ -381,12 +393,81 @@ class TestBehaviorPreservationProperties(unittest.TestCase):
         
         # Verify top options match
         self.assertEqual(result1.top_option.name, result2.top_option.name)
-        self.assertEqual(result1.top_option.score, result2.top_option.score)
+        self.assertEqual(result1.ranked_options[0].score, result2.ranked_options[0].score)
         
         # Verify all rankings match
-        for opt1, opt2 in zip(result1.ranked_options, result2.ranked_options):
-            self.assertEqual(opt1.name, opt2.name)
-            self.assertEqual(opt1.score, opt2.score)
+        for scored_opt1, scored_opt2 in zip(result1.ranked_options, result2.ranked_options):
+            self.assertEqual(scored_opt1.option.name, scored_opt2.option.name)
+            self.assertEqual(scored_opt1.score, scored_opt2.score)
         
         # Verify confidence levels match
         self.assertEqual(result1.confidence_level, result2.confidence_level)
+
+    @given(
+        traffic=st.sampled_from(["bursty", "steady"]),
+        control=st.sampled_from(["low", "medium", "high"]),
+        cost=st.sampled_from(["sensitive", "flexible"])
+    )
+    @settings(max_examples=100)
+    def test_property_input_immutability(self, traffic, control, cost):
+        """
+        Property 3: Input immutability
+        
+        EvaluationInputs objects are immutable - attempting to modify them
+        should raise an error. This ensures inputs cannot be accidentally
+        changed during evaluation.
+        
+        Feature: code-quality-improvements, Property 3: Input immutability
+        Validates: Requirements 9.2, 9.5
+        """
+        inputs = EvaluationInputs(
+            traffic=traffic,
+            control=control,
+            cost=cost
+        )
+        
+        # Verify inputs are frozen (immutable)
+        with self.assertRaises(Exception):  # FrozenInstanceError or AttributeError
+            inputs.traffic = "different"
+        
+        with self.assertRaises(Exception):
+            inputs.control = "different"
+        
+        with self.assertRaises(Exception):
+            inputs.cost = "different"
+    
+    @given(
+        traffic=st.sampled_from(["bursty", "steady"]),
+        control=st.sampled_from(["low", "medium", "high"]),
+        cost=st.sampled_from(["sensitive", "flexible"])
+    )
+    @settings(max_examples=100)
+    def test_property_internal_state_isolation(self, traffic, control, cost):
+        """
+        Property 4: Internal state isolation
+        
+        Multiple evaluations with the same inputs should not interfere with
+        each other. Each evaluation should produce independent results.
+        
+        Feature: code-quality-improvements, Property 4: Internal state isolation
+        Validates: Requirements 9.3
+        """
+        inputs = EvaluationInputs(
+            traffic=traffic,
+            control=control,
+            cost=cost
+        )
+        
+        # Run two evaluations
+        result1 = evaluate(inputs)
+        result2 = evaluate(inputs)
+        
+        # Results should be equal but not the same object
+        self.assertIsNot(result1, result2)
+        self.assertIsNot(result1.ranked_options, result2.ranked_options)
+        
+        # But values should be identical
+        self.assertEqual(len(result1.ranked_options), len(result2.ranked_options))
+        for scored1, scored2 in zip(result1.ranked_options, result2.ranked_options):
+            self.assertEqual(scored1.option.name, scored2.option.name)
+            self.assertEqual(scored1.score, scored2.score)

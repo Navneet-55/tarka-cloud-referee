@@ -3,7 +3,7 @@ Command-line interface for Tarka Cloud Compute Referee.
 """
 
 from typing import Dict, Set
-from src.models import EvaluationInputs, EvaluationResult, OptionEvaluation, ComputeOption
+from src.models import EvaluationInputs, EvaluationResult, OptionEvaluation, ComputeOption, ScoredOption
 from src.tarka_core import evaluate
 from src.rendering import format_option_output, format_confidence
 
@@ -64,12 +64,13 @@ def main() -> None:
 
     # Ranked options
     print("\nRecommended options (ranked):")
-    for opt in result.ranked_options:
+    for scored_opt in result.ranked_options:
+        opt: ComputeOption = scored_opt.option
         evaluation: OptionEvaluation = result.option_details[opt.name]
         print(f"\n{'=' * 70}")
         print(f"{evaluation.rank}. {opt.name}")
         print("=" * 70)
-        print(format_option_output(opt, evaluation))
+        print(format_option_output(scored_opt, evaluation))
     
     # Explainability timeline for top option
     if result.ranked_options:

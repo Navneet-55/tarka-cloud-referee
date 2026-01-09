@@ -28,7 +28,7 @@ class TestCoreEvaluation(unittest.TestCase):
         
         self.assertIsNotNone(result)
         self.assertGreater(len(result.ranked_options), 0)
-        self.assertEqual(result.ranked_options[0].name, "AWS Lambda")
+        self.assertEqual(result.ranked_options[0].option.name, "AWS Lambda")
         self.assertGreater(result.ranked_options[0].score, 0)
     
     def test_steady_high_control_improves_ec2_ranking(self):
@@ -45,13 +45,13 @@ class TestCoreEvaluation(unittest.TestCase):
         
         # EC2 should be ranked in top 2 due to high control (+2 points)
         # ECS also gets +2 for steady traffic, so they may tie
-        ec2_rank = next((i+1 for i, opt in enumerate(result.ranked_options) if opt.name == "AWS EC2"), None)
+        ec2_rank = next((i+1 for i, scored_opt in enumerate(result.ranked_options) if scored_opt.option.name == "AWS EC2"), None)
         self.assertIsNotNone(ec2_rank)
         self.assertLessEqual(ec2_rank, 2)  # EC2 should be in top 2
         
         # Verify EC2 has a positive score
-        ec2_option = next(opt for opt in result.ranked_options if opt.name == "AWS EC2")
-        self.assertGreater(ec2_option.score, 0)
+        ec2_scored = next(scored_opt for scored_opt in result.ranked_options if scored_opt.option.name == "AWS EC2")
+        self.assertGreater(ec2_scored.score, 0)
     
     def test_medium_control_steady_returns_three_options(self):
         """Medium control + steady traffic should return all 3 options without crashing."""
@@ -66,12 +66,13 @@ class TestCoreEvaluation(unittest.TestCase):
         self.assertEqual(len(result.ranked_options), 3)
         
         # Verify all expected options are present
-        option_names = {opt.name for opt in result.ranked_options}
+        option_names = {scored_opt.option.name for scored_opt in result.ranked_options}
         expected_names = {"AWS Lambda", "AWS ECS (Fargate)", "AWS EC2"}
         self.assertEqual(option_names, expected_names)
         
         # Verify each option has evaluation details
-        for opt in result.ranked_options:
+        for scored_opt in result.ranked_options:
+            opt = scored_opt.option
             self.assertIn(opt.name, result.option_details)
             eval_detail = result.option_details[opt.name]
             self.assertEqual(eval_detail.option.name, opt.name)
@@ -100,7 +101,7 @@ class TestCoreEvaluation(unittest.TestCase):
         
         # Check top option exists
         self.assertIsNotNone(result.top_option)
-        self.assertEqual(result.top_option, result.ranked_options[0])
+        self.assertEqual(result.top_option, result.ranked_options[0].option)
 
 
 if __name__ == "__main__":

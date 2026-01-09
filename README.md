@@ -59,7 +59,16 @@ python3 -m streamlit run ui.py
 
 ### Run Tests
 ```bash
+# Run all tests
+python3 -m unittest discover tests -v
+
+# Run specific test file
 python3 -m unittest tests.test_core
+python3 -m unittest tests.test_refactoring
+
+# Run with coverage (if coverage.py is installed)
+python3 -m coverage run -m unittest discover tests
+python3 -m coverage report
 ```
 
 ## Example Scenarios
@@ -93,14 +102,33 @@ python3 -m unittest tests.test_core
 
 ## Project Structure
 
-- `src/models.py` - Data models (ComputeOption, EvaluationInputs, EvaluationResult)
-- `src/tarka_core.py` - Core evaluation logic and scoring
-- `src/rendering.py` - Rendering helpers for consistent output
-- `cli.py` - Command-line interface
-- `ui.py` - Streamlit web interface
-- `tests/test_core.py` - Unit tests for core logic
+- `src/models.py` - Data models (ComputeOption, EvaluationInputs, EvaluationResult, etc.)
+- `src/tarka_core.py` - Core evaluation logic and scoring engine
+- `src/rendering.py` - Rendering helpers for consistent output formatting
+- `src/constants.py` - Constants, type aliases, and scoring rule configuration
+- `src/exceptions.py` - Custom exception classes for error handling
+- `cli.py` - Command-line interface with type hints and validation
+- `ui.py` - Streamlit web interface with theme support
+- `tests/test_core.py` - Unit tests for core evaluation logic
+- `tests/test_refactoring.py` - Behavior preservation and property-based tests
 - `requirements.txt` - Python dependencies
-- `.kiro/notes.md` - Kiro usage notes
+- `.kiro/specs/code-quality-improvements/` - Spec-driven refactoring documentation
+  - `requirements.md` - Formal requirements for code quality improvements
+  - `design.md` - Comprehensive design document with correctness properties
+  - `tasks.md` - Implementation task list with traceability
+- `.kiro/notes.md` - Kiro usage notes and development history
+
+## Code Quality
+
+This project follows Python best practices and has undergone comprehensive refactoring:
+
+- **Type Safety**: Full type hints throughout codebase, passes mypy type checking
+- **Immutability**: All data models use frozen dataclasses to prevent accidental mutations
+- **Error Handling**: Custom exception hierarchy with descriptive error messages
+- **Documentation**: Google-style docstrings for all public functions and classes
+- **Testing**: 23 tests including property-based tests with 100% behavior preservation
+- **Configuration-Driven**: Scoring rules defined as declarative configuration
+- **Separation of Concerns**: Clear boundaries between data, logic, and presentation
 
 ## Limitations
 
@@ -116,8 +144,17 @@ python3 -m unittest tests.test_core
 
 ## Kiro Usage
 
-This project was developed with Kiro's assistance for reasoning and iteration. See `.kiro/notes.md` for details.
+This project was developed with Kiro's assistance for reasoning, iteration, and systematic refactoring. See `.kiro/notes.md` for complete details.
 
+### Initial Development
 - Kiro helped clarify the "Referee" challenge intent and iterate on trade-off explanations
 - All final design decisions, code structure, and implementation were made manually
 - Kiro acted as an accelerator, not a replacement for hands-on development
+
+### Code Quality Improvements (Refactoring Phase)
+- Used Kiro's spec-driven development workflow to systematically improve code quality
+- Created formal requirements document defining 10 categories of improvements
+- Developed comprehensive design document with 6 correctness properties
+- Implemented detailed task list with 12 major tasks and property-based tests
+- Achieved 100% behavior preservation through comprehensive testing
+- All refactoring guided by requirements → design → tasks → implementation workflow

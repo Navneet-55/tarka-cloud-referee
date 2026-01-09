@@ -1,0 +1,4 @@
+# file: /Users/navneet/Downloads/tarka/tarka-cloud-referee/src/constants.py
+# hypothesis_version: 6.141.1
+
+[1.0, 2.0, 3.0, 'AWS EC2', 'AWS ECS (Fargate)', 'AWS Lambda', 'High', 'Low', 'Medium', 'bursty', 'control', 'cost', 'flexible', 'high', 'low', 'medium', 'sensitive', 'steady', 'traffic']

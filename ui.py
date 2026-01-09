@@ -105,8 +105,32 @@ def apply_base_css(theme: str):
         border-bottom: 1px solid {border_color};
     }}
     
-    header[data-testid="stHeader"] * {{
+    /* Header toolbar buttons should be visible */
+    header[data-testid="stHeader"] button {{
         color: {text_color} !important;
+    }}
+    
+    /* Streamlit menu dropdown - adapt to theme */
+    [data-testid="stAppViewBlockContainer"] [role="menu"],
+    [role="menu"] {{
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }}
+    
+    [data-testid="stAppViewBlockContainer"] [role="menuitem"],
+    [role="menuitem"],
+    [role="menuitem"] * {{
+        color: {text_color} !important;
+    }}
+    
+    [role="menuitem"]:hover {{
+        background-color: {surface} !important;
+    }}
+    
+    /* Separator in menu */
+    [role="separator"] {{
+        border-color: {border_color} !important;
     }}
     
     /* Base theme variables */
@@ -410,70 +434,6 @@ def render_sidebar():
     
     st.sidebar.markdown("---")
     
-    # About Tarka
-    with st.sidebar.expander("ℹ️ About Tarka — Cloud Compute Referee"):
-        st.markdown("""
-        Tarka is a constraint-aware decision-support tool designed to help developers reason through AWS compute choices.
-        Instead of recommending a single 'best' service, it explains trade-offs across Lambda, ECS, and EC2 based on real-world constraints such as traffic patterns, infrastructure control, and cost sensitivity.
-        The goal is to support thoughtful architectural decisions, especially in early-stage system design.
-        """)
-        
-        st.markdown("---")
-        st.markdown("**How Tarka Works**")
-        st.markdown("""
-        • User inputs are collected via a lightweight Streamlit interface  
-        • Inputs are mapped to deterministic rules (no probabilistic scoring or ML inference)
-        • Each compute option accumulates alignment signals based on constraints
-        • Final output presents ranked options with clear pros, cons, and watch-outs
-        • The system intentionally avoids a single definitive recommendation
-        """)
-        
-        st.markdown("---")
-        st.markdown("**Technical Architecture & Stack**")
-        st.markdown("""
-        • **Language:** Python 3.9+
-        • **UI Framework:** Streamlit
-        • **Core Logic:** Pure Python (rule-based, deterministic)
-        • **State Management:** Streamlit session state
-        • **Styling:** Custom CSS injected at runtime (theme-aware)
-        • **Runtime:** Local execution; no backend services required
-        """)
-        
-        st.markdown("**Explicit Guarantees:**")
-        st.markdown("""
-        • No external APIs
-        • No cloud calls
-        • No data collection
-        • Fully offline-capable
-        • Reproducible results for the same inputs
-        """)
-        
-        st.markdown("---")
-        st.markdown("**Design Philosophy**")
-        st.markdown("""
-        Tarka is intentionally opinionated in structure but transparent in reasoning.
-        The interface is designed to feel calm, readable, and focused — prioritizing clarity over complexity.
-        Visual polish supports comprehension rather than distraction, especially on mobile devices.
-        """)
-        
-        st.markdown("---")
-        st.markdown("**Creator**")
-        st.markdown("""
-        Created by **Navneet Patnaik**
-        
-        Built as part of the AI for Bharat — Kiro Week 6 challenge.
-        All architectural decisions, scoring logic, and UI structure were implemented manually.
-        
-        **GitHub:** [https://github.com/Navneet-55](https://github.com/Navneet-55)
-        """)
-        
-        st.markdown("---")
-        st.markdown("""
-        <div style="color: var(--muted); font-size: 0.9rem; font-style: italic; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-        This tool is intended to support architectural reasoning and does not replace professional judgment.
-        </div>
-        """, unsafe_allow_html=True)
-    
     # Help
     with st.sidebar.expander("❓ Help"):
         st.markdown("""
@@ -637,9 +597,10 @@ def render_results(result: EvaluationResult):
     # Ranked options
     st.markdown("### 🎯 Ranked Options")
     
-    max_score = max(opt.score for opt in result.ranked_options) if result.ranked_options else 1
+    max_score = max(scored_opt.score for scored_opt in result.ranked_options) if result.ranked_options else 1
     
-    for opt in result.ranked_options:
+    for scored_opt in result.ranked_options:
+        opt = scored_opt.option
         evaluation = result.option_details[opt.name]
         is_best_fit = evaluation.rank == 1
         card_class = "best-fit-card" if is_best_fit else "option-card"
@@ -648,7 +609,7 @@ def render_results(result: EvaluationResult):
         
         # Rank and score
         st.markdown(f'<span class="rank-badge">#{evaluation.rank}</span>', unsafe_allow_html=True)
-        st.markdown(f'<div class="score-badge">Score: {opt.score:.1f}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="score-badge">Score: {scored_opt.score:.1f}</div>', unsafe_allow_html=True)
         
         st.markdown(f"#### {opt.name}")
         st.markdown(f"**Recommended for:** {opt.best_for}")
@@ -705,11 +666,12 @@ def render_results(result: EvaluationResult):
 
 ## Ranked Options
 """
-        for opt in result.ranked_options:
+        for scored_opt in result.ranked_options:
+            opt = scored_opt.option
             eval_detail = result.option_details[opt.name]
             md_content += f"""
 ### {eval_detail.rank}. {opt.name}
-**Score:** {opt.score:.1f}
+**Score:** {scored_opt.score:.1f}
 **Recommended for:** {opt.best_for}
 
 **Why this scored:**
@@ -754,9 +716,10 @@ def render_results(result: EvaluationResult):
 
 Ranked Options:
 """
-        for opt in result.ranked_options:
+        for scored_opt in result.ranked_options:
+            opt = scored_opt.option
             eval_detail = result.option_details[opt.name]
-            summary_text += f"{eval_detail.rank}. {opt.name} (Score: {opt.score:.1f}) - {opt.best_for}\n"
+            summary_text += f"{eval_detail.rank}. {opt.name} (Score: {scored_opt.score:.1f}) - {opt.best_for}\n"
         
         summary_text += f"""
 Trade-off Summary:
@@ -778,6 +741,79 @@ Disclaimer: This is not a single best answer; use the trade-offs above to decide
         Decision logic: v1.0 (deterministic, local)
     </div>
     """, unsafe_allow_html=True)
+
+
+# ============================================================================
+# ABOUT SECTION
+# ============================================================================
+
+def render_about():
+    """Render About Tarka section at the bottom of the page."""
+    st.markdown("---")
+    st.markdown("### ℹ️ About Tarka — Cloud Compute Referee")
+    
+    with st.expander("Learn more about Tarka", expanded=False):
+        st.markdown("""
+        Tarka is a constraint-aware decision-support tool designed to help developers reason through AWS compute choices.
+        Instead of recommending a single 'best' service, it explains trade-offs across Lambda, ECS, and EC2 based on real-world constraints such as traffic patterns, infrastructure control, and cost sensitivity.
+        The goal is to support thoughtful architectural decisions, especially in early-stage system design.
+        """)
+        
+        st.markdown("---")
+        st.markdown("**How Tarka Works**")
+        st.markdown("""
+        • User inputs are collected via a lightweight Streamlit interface  
+        • Inputs are mapped to deterministic rules (no probabilistic scoring or ML inference)  
+        • Each compute option accumulates alignment signals based on constraints  
+        • Final output presents ranked options with clear pros, cons, and watch-outs  
+        • The system intentionally avoids a single definitive recommendation
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Technical Architecture & Stack**")
+        st.markdown("""
+        • **Language:** Python 3.9+  
+        • **UI Framework:** Streamlit  
+        • **Core Logic:** Pure Python (rule-based, deterministic)  
+        • **State Management:** Streamlit session state  
+        • **Styling:** Custom CSS injected at runtime (theme-aware)  
+        • **Runtime:** Local execution; no backend services required
+        """)
+        
+        st.markdown("**Explicit Guarantees:**")
+        st.markdown("""
+        • No external APIs  
+        • No cloud calls  
+        • No data collection  
+        • Fully offline-capable  
+        • Reproducible results for the same inputs
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Design Philosophy**")
+        st.markdown("""
+        Tarka is intentionally opinionated in structure but transparent in reasoning.
+        The interface is designed to feel calm, readable, and focused — prioritizing clarity over complexity.
+        Visual polish supports comprehension rather than distraction, especially on mobile devices.
+        """)
+        
+        st.markdown("---")
+        st.markdown("**Creator**")
+        st.markdown("""
+        Created by **Navneet Patnaik**
+        
+        Built as part of the AI for Bharat — Kiro Week 6 challenge.
+        All architectural decisions, scoring logic, and UI structure were implemented manually.
+        
+        **GitHub:** [https://github.com/Navneet-55](https://github.com/Navneet-55)
+        """)
+        
+        st.markdown("---")
+        st.markdown("""
+        <div style="color: var(--muted); font-size: 0.9rem; font-style: italic;">
+        This tool is intended to support architectural reasoning and does not replace professional judgment.
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -813,6 +849,9 @@ def main():
     # Results
     if st.session_state.results:
         render_results(st.session_state.results)
+    
+    # About section at the bottom
+    render_about()
 
 
 if __name__ == "__main__":
