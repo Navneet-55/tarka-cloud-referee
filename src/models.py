@@ -5,6 +5,17 @@ Data models for Tarka Cloud Compute Referee.
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 
+from .constants import (
+    TrafficPattern,
+    ControlLevel,
+    CostSensitivity,
+    ConfidenceLevel,
+    DEFAULT_WEIGHTS,
+    VALID_TRAFFIC_PATTERNS,
+    VALID_CONTROL_LEVELS,
+    VALID_COST_SENSITIVITIES
+)
+
 
 @dataclass
 class ComputeOption:
@@ -24,27 +35,27 @@ class ComputeOption:
 @dataclass
 class EvaluationInputs:
     """Inputs for evaluation."""
-    traffic: str  # "bursty" or "steady"
-    control: str  # "low", "medium", or "high"
-    cost: str  # "sensitive" or "flexible"
+    traffic: TrafficPattern
+    control: ControlLevel
+    cost: CostSensitivity
     weights: Optional[Dict[str, float]] = None
     
     def __post_init__(self):
         """Validate inputs and set defaults."""
         if self.weights is None:
-            self.weights = {"traffic": 1.0, "control": 1.0, "cost": 1.0}
+            self.weights = DEFAULT_WEIGHTS.copy()
         
         # Validate traffic
-        if self.traffic not in ["bursty", "steady"]:
-            raise ValueError(f"traffic must be 'bursty' or 'steady', got '{self.traffic}'")
+        if self.traffic not in VALID_TRAFFIC_PATTERNS:
+            raise ValueError(f"traffic must be one of {VALID_TRAFFIC_PATTERNS}, got '{self.traffic}'")
         
         # Validate control
-        if self.control not in ["low", "medium", "high"]:
-            raise ValueError(f"control must be 'low', 'medium', or 'high', got '{self.control}'")
+        if self.control not in VALID_CONTROL_LEVELS:
+            raise ValueError(f"control must be one of {VALID_CONTROL_LEVELS}, got '{self.control}'")
         
         # Validate cost
-        if self.cost not in ["sensitive", "flexible"]:
-            raise ValueError(f"cost must be 'sensitive' or 'flexible', got '{self.cost}'")
+        if self.cost not in VALID_COST_SENSITIVITIES:
+            raise ValueError(f"cost must be one of {VALID_COST_SENSITIVITIES}, got '{self.cost}'")
 
 
 @dataclass
@@ -69,7 +80,7 @@ class EvaluationResult:
     """Complete evaluation result."""
     ranked_options: List[ComputeOption]
     option_details: Dict[str, OptionEvaluation]
-    confidence_level: str
+    confidence_level: ConfidenceLevel
     confidence_message: str
     inputs: EvaluationInputs
     what_would_change: List[str]

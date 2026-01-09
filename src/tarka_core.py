@@ -8,13 +8,23 @@ from .models import (
     ComputeOption, EvaluationInputs, EvaluationResult,
     OptionEvaluation, ScoreContribution
 )
+from .constants import (
+    SCORE_TRAFFIC_MATCH,
+    SCORE_CONTROL_MATCH,
+    SCORE_COST_MATCH,
+    CONFIDENCE_HIGH_THRESHOLD,
+    CONFIDENCE_MEDIUM_THRESHOLD,
+    OPTION_LAMBDA,
+    OPTION_ECS,
+    OPTION_EC2
+)
 
 
 def get_compute_options() -> List[ComputeOption]:
     """Get all available compute options with their characteristics."""
     return [
         ComputeOption(
-            name="AWS Lambda",
+            name=OPTION_LAMBDA,
             pros=[
                 "No server management",
                 "Automatic scaling",
@@ -28,7 +38,7 @@ def get_compute_options() -> List[ComputeOption]:
             best_for="Event-driven or bursty workloads"
         ),
         ComputeOption(
-            name="AWS ECS (Fargate)",
+            name=OPTION_ECS,
             pros=[
                 "Good balance of control and abstraction",
                 "Works well with containers",
@@ -41,7 +51,7 @@ def get_compute_options() -> List[ComputeOption]:
             best_for="Microservices with steady traffic"
         ),
         ComputeOption(
-            name="AWS EC2",
+            name=OPTION_EC2,
             pros=[
                 "Maximum infrastructure control",
                 "Custom networking and storage",
