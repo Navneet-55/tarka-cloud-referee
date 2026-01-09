@@ -2,50 +2,51 @@
 Command-line interface for Tarka Cloud Compute Referee.
 """
 
-from src.models import EvaluationInputs
+from typing import Dict, Set
+from src.models import EvaluationInputs, EvaluationResult, OptionEvaluation, ComputeOption
 from src.tarka_core import evaluate
 from src.rendering import format_option_output, format_confidence
 
 
-def ask(question: str, choices: dict) -> str:
+def ask(question: str, choices: Dict[str, str]) -> str:
     """Prompt user for input with validation."""
     print(f"\n{question}")
     for key, value in choices.items():
         print(f"{key}: {value}")
 
     while True:
-        answer = input("Choose: ").strip().lower()
+        answer: str = input("Choose: ").strip().lower()
         if answer in choices:
             return answer
         print("Invalid input. Try again.")
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     print("Tarka — Cloud Compute Referee")
     print("=" * 70)
 
     # Collect inputs
-    traffic = ask(
+    traffic: str = ask(
         "What best describes your traffic pattern?",
         {"bursty": "Bursty / unpredictable", "steady": "Steady / predictable"}
     )
 
-    control = ask(
+    control: str = ask(
         "How much infrastructure control do you need?",
         {"low": "Low", "medium": "Medium", "high": "High"}
     )
 
-    cost = ask(
+    cost: str = ask(
         "How cost-sensitive is this workload?",
         {"sensitive": "Very sensitive", "flexible": "Flexible"}
     )
 
     # Create inputs object
-    inputs = EvaluationInputs(traffic=traffic, control=control, cost=cost)
+    inputs: EvaluationInputs = EvaluationInputs(traffic=traffic, control=control, cost=cost)
     
     # Evaluate
-    result = evaluate(inputs)
+    result: EvaluationResult = evaluate(inputs)
 
     # Display results
     print("\n" + "=" * 70)
@@ -64,7 +65,7 @@ def main():
     # Ranked options
     print("\nRecommended options (ranked):")
     for opt in result.ranked_options:
-        evaluation = result.option_details[opt.name]
+        evaluation: OptionEvaluation = result.option_details[opt.name]
         print(f"\n{'=' * 70}")
         print(f"{evaluation.rank}. {opt.name}")
         print("=" * 70)
@@ -72,8 +73,8 @@ def main():
     
     # Explainability timeline for top option
     if result.ranked_options:
-        top_opt = result.top_option
-        top_eval = result.option_details[top_opt.name]
+        top_opt: ComputeOption = result.top_option
+        top_eval: OptionEvaluation = result.option_details[top_opt.name]
         print(f"\n{'=' * 70}")
         print(f"EXPLAINABILITY TIMELINE (Top Option: {top_opt.name})")
         print("=" * 70)
@@ -84,8 +85,8 @@ def main():
             print(f"    → Score contribution: +{contrib.points:.1f}")
         
         # Show factors with no contribution
-        all_factors = {"traffic", "control", "cost"}
-        contributing_factors = {c.factor for c in top_eval.contributions}
+        all_factors: Set[str] = {"traffic", "control", "cost"}
+        contributing_factors: Set[str] = {c.factor for c in top_eval.contributions}
         for factor in all_factors - contributing_factors:
             print(f"  {factor.capitalize()}: No contribution to score")
     

@@ -3,7 +3,7 @@ Core evaluation logic for Tarka Cloud Compute Referee.
 Deterministic, rule-based scoring with no external dependencies.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from .models import (
     ComputeOption, EvaluationInputs, EvaluationResult,
     OptionEvaluation, ScoreContribution
@@ -17,7 +17,8 @@ from .constants import (
     CONFIDENCE_MEDIUM_THRESHOLD,
     OPTION_LAMBDA,
     OPTION_ECS,
-    OPTION_EC2
+    OPTION_EC2,
+    ConfidenceLevel
 )
 
 
@@ -73,12 +74,12 @@ def _calculate_score_contributions(
     inputs: EvaluationInputs
 ) -> List[ScoreContribution]:
     """Calculate score contributions for an option based on inputs."""
-    contributions = []
-    weights = inputs.weights
+    contributions: List[ScoreContribution] = []
+    weights: Optional[Dict[str, float]] = inputs.weights
     
     if option.name == OPTION_LAMBDA:
         if inputs.traffic == "bursty":
-            points = SCORE_TRAFFIC_MATCH * weights.get("traffic", 1.0)
+            points: float = SCORE_TRAFFIC_MATCH * weights.get("traffic", 1.0)
             contributions.append(ScoreContribution(
                 factor="traffic",
                 points=points,
@@ -125,8 +126,8 @@ def _generate_rationale(
     inputs: EvaluationInputs
 ) -> List[str]:
     """Generate deterministic rationale for why an option scored as it did."""
-    reasons = []
-    contributions = _calculate_score_contributions(option, inputs)
+    reasons: List[str] = []
+    contributions: List[ScoreContribution] = _calculate_score_contributions(option, inputs)
     
     # Add positive contributions
     for contrib in contributions:
@@ -168,14 +169,14 @@ def _score_options(
     
     # Calculate contributions and accumulate scores
     for opt in options:
-        contributions = _calculate_score_contributions(opt, inputs)
+        contributions: List[ScoreContribution] = _calculate_score_contributions(opt, inputs)
         for contrib in contributions:
             opt.score += contrib.points
     
     # Normalize weights if needed
-    weights = inputs.weights
+    weights: Optional[Dict[str, float]] = inputs.weights
     if weights:
-        total = sum(weights.values())
+        total: float = sum(weights.values())
         if total > 0:
             # Normalize to maintain relative importance
             for opt in options:
@@ -190,7 +191,7 @@ def _get_what_would_change(
     inputs: EvaluationInputs
 ) -> List[str]:
     """Generate rule-based suggestions for what would change the decision."""
-    suggestions = []
+    suggestions: List[str] = []
     
     if top_option.name == OPTION_LAMBDA:
         if inputs.traffic == "bursty":
@@ -221,12 +222,12 @@ def _get_what_would_change(
     return suggestions if suggestions else ["Consider reviewing all trade-offs as requirements evolve"]
 
 
-def get_confidence(ranked: List[ComputeOption]) -> Tuple[str, str]:
+def get_confidence(ranked: List[ComputeOption]) -> Tuple[ConfidenceLevel, str]:
     """Calculate confidence based on score gap between rank 1 and 2."""
     if len(ranked) < 2:
         return "High", "Score gap calculation requires at least 2 options"
     
-    gap = ranked[0].score - ranked[1].score
+    gap: float = ranked[0].score - ranked[1].score
     if gap >= CONFIDENCE_HIGH_THRESHOLD:
         return "High", f"Score gap of {gap:.1f} indicates clear preference"
     elif gap >= CONFIDENCE_MEDIUM_THRESHOLD:
@@ -246,16 +247,16 @@ def evaluate(inputs: EvaluationInputs) -> EvaluationResult:
         EvaluationResult with ranked options, details, confidence, and recommendations
     """
     # Get all options
-    options = get_compute_options()
+    options: List[ComputeOption] = get_compute_options()
     
     # Score and rank options
-    ranked = _score_options(options, inputs)
+    ranked: List[ComputeOption] = _score_options(options, inputs)
     
     # Build option details
-    option_details = {}
+    option_details: Dict[str, OptionEvaluation] = {}
     for idx, opt in enumerate(ranked, 1):
-        contributions = _calculate_score_contributions(opt, inputs)
-        rationale = _generate_rationale(opt, inputs)
+        contributions: List[ScoreContribution] = _calculate_score_contributions(opt, inputs)
+        rationale: List[str] = _generate_rationale(opt, inputs)
         
         option_details[opt.name] = OptionEvaluation(
             option=opt,
@@ -265,10 +266,12 @@ def evaluate(inputs: EvaluationInputs) -> EvaluationResult:
         )
     
     # Calculate confidence
+    conf_level: ConfidenceLevel
+    conf_msg: str
     conf_level, conf_msg = get_confidence(ranked)
     
     # Generate "what would change" suggestions
-    what_would_change = _get_what_would_change(ranked[0], inputs) if ranked else []
+    what_would_change: List[str] = _get_what_would_change(ranked[0], inputs) if ranked else []
     
     return EvaluationResult(
         ranked_options=ranked,

@@ -3,12 +3,13 @@ Rendering helpers for consistent output formatting.
 """
 
 from typing import List
-from .models import ComputeOption, EvaluationResult, OptionEvaluation
+from .models import ComputeOption, OptionEvaluation
+from .constants import ConfidenceLevel
 
 
 def format_option_output(option: ComputeOption, evaluation: OptionEvaluation) -> str:
     """Format a single option for output."""
-    lines = []
+    lines: List[str] = []
     lines.append(f"Score: {option.score:.1f}")
     lines.append(f"Recommended for: {option.best_for}")
     lines.append("")
@@ -30,7 +31,7 @@ def format_option_output(option: ComputeOption, evaluation: OptionEvaluation) ->
     return "\n".join(lines)
 
 
-def format_confidence(level: str, message: str) -> str:
+def format_confidence(level: ConfidenceLevel, message: str) -> str:
     """Format confidence indicator."""
     return f"Confidence / Sensitivity: {level.upper()}\n{message}"
 

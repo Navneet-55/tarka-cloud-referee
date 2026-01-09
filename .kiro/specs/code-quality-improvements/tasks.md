@@ -39,21 +39,21 @@ This plan refactors the Tarka codebase to improve code quality while preserving 
     - _Requirements: 1.1, 2.1_
 
 - [-] 3. Add comprehensive type hints
-  - [ ] 3.1 Add missing type hints to `src/tarka_core.py`
+  - [x] 3.1 Add missing type hints to `src/tarka_core.py`
     - Add return type hints to all functions
     - Add parameter type hints to all functions
     - Use typing module features (List, Dict, Tuple, Optional)
     - _Requirements: 1.1, 1.2_
   
-  - [ ] 3.2 Add missing type hints to `src/rendering.py`
+  - [x] 3.2 Add missing type hints to `src/rendering.py`
     - Add type hints to all functions
     - _Requirements: 1.1_
   
-  - [ ] 3.3 Add missing type hints to `cli.py`
+  - [x] 3.3 Add missing type hints to `cli.py`
     - Add type hints to all functions
     - _Requirements: 1.1_
   
-  - [ ] 3.4 Run type checker (mypy)
+  - [-] 3.4 Run type checker (mypy)
     - Verify no type errors
     - _Requirements: 1.1, 1.2_
 
