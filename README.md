@@ -1,163 +1,123 @@
 # Tarka — Cloud Compute Referee
 
-A constraint-aware decision-support tool that helps developers reason through AWS compute choices by explaining trade-offs rather than recommending a single "best" option.
+Explain trade-offs across AWS compute options with transparent, deterministic scoring. Tarka ranks AWS Lambda, ECS (Fargate), and EC2 based on your inputs and clearly explains why — so you can make confident, context-aware decisions rather than chase a single "best" answer.
 
-## Quick Demo (30 seconds)
+## Highlights
 
-1. **Run the UI:**
-   ```bash
-   streamlit run ui.py
-   ```
+- **Transparent scoring:** Deterministic, rule-based evaluation across traffic, control, and cost.
+- **Clear rationale:** Human-readable reasons behind every score, plus watch-outs.
+- **Confidence indicator:** Shows how strong the top pick is vs. alternatives.
+- **Two interfaces:** Streamlit UI for interactive use, simple CLI for terminals.
+- **Offline-first:** No cloud calls; runs locally with minimal dependencies.
 
-2. **Select inputs:**
-   - Traffic: Bursty / unpredictable
-   - Control: Low
-   - Cost: Very sensitive
-   - Click "Compare Options"
-
-3. **Review results:**
-   - See ranked options (Lambda, ECS/Fargate, EC2)
-   - Check confidence indicator
-   - Expand "Why this scored" for each option
-   - Review pros, cons, and watch-outs
-
-## Features
-
-- **Ranked comparison** of AWS Lambda, ECS (Fargate), and EC2 with scores
-- **Deterministic scoring** based on traffic patterns, infrastructure control, and cost sensitivity
-- **Confidence indicator** derived from score gaps between options
-- **Explainability** showing why each option scored based on inputs
-- **Interactive Streamlit UI** with light/dark themes and smooth animations
-- **CLI interface** for terminal-based usage
-- **Export capabilities** (Markdown, copyable summary)
-- **Offline-first** with no external APIs or cloud calls
-
-## How to Run
+## Quick Start
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.9+ (macOS, Linux, Windows)
 
-### Installation
+### Install
 ```bash
-# Optional: create virtual environment
+# Optional: create a virtual environment
 python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install dependencies
 python3 -m pip install -r requirements.txt
 ```
 
-### CLI
-```bash
-python3 cli.py
-```
-
-### Streamlit UI
+### Run the UI
 ```bash
 python3 -m streamlit run ui.py
 ```
 
-### Run Tests
+### Run the CLI
+```bash
+python3 cli.py
+```
+
+You’ll be prompted for:
+- Traffic pattern: `bursty` or `steady`
+- Control level: `low`, `medium`, or `high`
+- Cost sensitivity: `sensitive` or `flexible`
+
+## Programmatic Use
+
+Use the core scoring directly in Python:
+
+```python
+from src.models import EvaluationInputs
+from src.tarka_core import evaluate
+
+inputs = EvaluationInputs(
+    traffic="bursty",
+    control="low",
+    cost="sensitive",  # optional: weights={"traffic":1.0, "control":1.0, "cost":1.0}
+)
+
+result = evaluate(inputs)
+print("Top option:", result.top_option.name)
+print("Confidence:", result.confidence_level, "-", result.confidence_message)
+
+for scored in result.ranked_options:
+    print(scored.option.name, scored.score)
+```
+
+## How It Works
+
+- **Options considered:** AWS Lambda, AWS ECS (Fargate), AWS EC2.
+- **Inputs:** `traffic` (`bursty|steady`), `control` (`low|medium|high`), `cost` (`sensitive|flexible`).
+- **Scoring rules:** Declarative rules in [src/constants.py](src/constants.py) translate matches into points (with optional weights).
+- **Explainability:** Each option includes positive reasons and contextual notes based on your inputs.
+- **Confidence:** Computed from the score gap between rank 1 and 2.
+
+## Examples
+
+- **Startup MVP**: `bursty`, `low`, `sensitive` → Typically favors Lambda (pay-per-use, auto-scaling).
+- **Enterprise migration**: `steady`, `high`, `flexible` → Typically favors EC2 (full control).
+- **Microservices API**: `steady`, `medium`, `flexible` → Typically favors ECS/Fargate (balanced control).
+
+## Project Structure
+
+- [src/models.py](src/models.py) — Data models (`ComputeOption`, `EvaluationInputs`, `EvaluationResult`, …)
+- [src/tarka_core.py](src/tarka_core.py) — Core evaluation logic and scoring engine
+- [src/rendering.py](src/rendering.py) — Formatting helpers for CLI output
+- [src/constants.py](src/constants.py) — Scoring rules, thresholds, and type aliases
+- [src/exceptions.py](src/exceptions.py) — Custom exceptions (e.g., `InvalidInputError`)
+- [cli.py](cli.py) — Interactive terminal experience
+- [ui.py](ui.py) — Streamlit UI with theme and motion system
+- [tests/test_core.py](tests/test_core.py) — Unit tests for core logic
+- [tests/test_refactoring.py](tests/test_refactoring.py) — Behavior-preservation and property tests
+- [requirements.txt](requirements.txt) — Dependencies (Streamlit for UI, Hypothesis for tests)
+
+## Testing
+
 ```bash
 # Run all tests
 python3 -m unittest discover tests -v
 
-# Run specific test file
+# Run specific tests
 python3 -m unittest tests.test_core
 python3 -m unittest tests.test_refactoring
 
-# Run with coverage (if coverage.py is installed)
+# Optional coverage (if you install coverage)
+python3 -m pip install coverage
 python3 -m coverage run -m unittest discover tests
 python3 -m coverage report
 ```
 
-## Example Scenarios
-
-### Scenario 1: Startup MVP
-**Inputs:**
-- Traffic: Bursty / unpredictable
-- Control: Low
-- Cost: Very sensitive
-
-**Expected Top Ranking:** AWS Lambda
-**Reasoning:** Bursty traffic and cost sensitivity favor Lambda's pay-per-use model and auto-scaling.
-
-### Scenario 2: Enterprise Migration
-**Inputs:**
-- Traffic: Steady / predictable
-- Control: High
-- Cost: Flexible
-
-**Expected Top Ranking:** AWS EC2
-**Reasoning:** High control needs and steady traffic favor EC2's full infrastructure control.
-
-### Scenario 3: Microservices API
-**Inputs:**
-- Traffic: Steady / predictable
-- Control: Medium
-- Cost: Flexible
-
-**Expected Top Ranking:** AWS ECS (Fargate)
-**Reasoning:** Steady traffic and medium control needs align with ECS/Fargate's balanced approach.
-
-## Project Structure
-
-- `src/models.py` - Data models (ComputeOption, EvaluationInputs, EvaluationResult, etc.)
-- `src/tarka_core.py` - Core evaluation logic and scoring engine
-- `src/rendering.py` - Rendering helpers for consistent output formatting
-- `src/constants.py` - Constants, type aliases, and scoring rule configuration
-- `src/exceptions.py` - Custom exception classes for error handling
-- `cli.py` - Command-line interface with type hints and validation
-- `ui.py` - Streamlit web interface with theme support
-- `tests/test_core.py` - Unit tests for core evaluation logic
-- `tests/test_refactoring.py` - Behavior preservation and property-based tests
-- `requirements.txt` - Python dependencies
-- `.kiro/specs/code-quality-improvements/` - Spec-driven refactoring documentation
-  - `requirements.md` - Formal requirements for code quality improvements
-  - `design.md` - Comprehensive design document with correctness properties
-  - `tasks.md` - Implementation task list with traceability
-- `.kiro/notes.md` - Kiro usage notes and development history
-
-## Code Quality
-
-This project follows Python best practices and has undergone comprehensive refactoring:
-
-- **Type Safety**: Full type hints throughout codebase, passes mypy type checking
-- **Immutability**: All data models use frozen dataclasses to prevent accidental mutations
-- **Error Handling**: Custom exception hierarchy with descriptive error messages
-- **Documentation**: Google-style docstrings for all public functions and classes
-- **Testing**: 23 tests including property-based tests with 100% behavior preservation
-- **Configuration-Driven**: Scoring rules defined as declarative configuration
-- **Separation of Concerns**: Clear boundaries between data, logic, and presentation
-
 ## Limitations
 
-- **Early-stage focus:** Designed for initial architecture decisions, not production optimization
-- **Three options only:** Compares Lambda, ECS/Fargate, and EC2; does not include other AWS services
-- **Simplified scoring:** Uses basic rule-based scoring; does not model complex cost calculations or performance benchmarks
-- **No compliance modeling:** Does not account for specific compliance requirements (HIPAA, PCI-DSS, etc.)
-- **Static assumptions:** Assumes standard AWS regions and typical workload patterns
+- Focused on early-stage architectural decisions; not a cost/perf optimizer.
+- Only compares Lambda, ECS/Fargate, and EC2.
+- Simplified rule-based scoring; does not model detailed pricing or benchmarks.
+- No compliance modeling (HIPAA, PCI-DSS, etc.).
 
-## Decision Logic Version
+## Troubleshooting
 
-**v1.0** - Deterministic, rule-based scoring with explainability
-
-## Kiro Usage
-
-This project was developed with Kiro's assistance for reasoning, iteration, and systematic refactoring. See `.kiro/notes.md` for complete details.
-
-### Initial Development
-- Kiro helped clarify the "Referee" challenge intent and iterate on trade-off explanations
-- All final design decisions, code structure, and implementation were made manually
-- Kiro acted as an accelerator, not a replacement for hands-on development
-
-### Code Quality Improvements (Refactoring Phase)
-- Used Kiro's spec-driven development workflow to systematically improve code quality
-- Created formal requirements document defining 10 categories of improvements
-- Developed comprehensive design document with 6 correctness properties
-- Implemented detailed task list with 12 major tasks and property-based tests
-- Achieved 100% behavior preservation through comprehensive testing
-- All refactoring guided by requirements → design → tasks → implementation workflow
+- Streamlit not found: install with `python3 -m pip install -r requirements.txt`.
+- Import errors: ensure you run from the repository root so relative imports resolve.
+- Python version: use Python 3.9+; verify with `python3 --version`.
 
 ## Notes
-Minor documentation update for clarity.
+
+Minor documentation refresh for clarity and accuracy.
